@@ -1,0 +1,139 @@
+{
+  "products": [
+    {
+      "sku": "SKU-4421",
+      "description": "Industrial Sensor Module — 24V DC, IP67 rated, M12 connector",
+      "category": "Electronics",
+      "unit_price": 12.50,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 10
+    },
+    {
+      "sku": "SKU-7890",
+      "description": "Precision Timing Belt — HTD 5M profile, 15mm width, polyurethane",
+      "category": "Mechanical Components",
+      "unit_price": 15.00,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 25
+    },
+    {
+      "sku": "SKU-1100",
+      "description": "Stainless Steel Hex Bolt — M10x40, A2-70 grade",
+      "category": "Fasteners",
+      "unit_price": 0.45,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 500
+    },
+    {
+      "sku": "SKU-1102",
+      "description": "Stainless Steel Hex Nut — M10, A2-70 grade",
+      "category": "Fasteners",
+      "unit_price": 0.18,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 500
+    },
+    {
+      "sku": "SKU-2250",
+      "description": "Hydraulic Cylinder Seal Kit — 50mm bore, NBR material",
+      "category": "Hydraulics",
+      "unit_price": 34.00,
+      "currency": "EUR",
+      "unit_of_measure": "kit",
+      "min_order_quantity": 5
+    },
+    {
+      "sku": "SKU-3010",
+      "description": "3-Phase AC Motor — 2.2kW, 1450 RPM, IE3 efficiency class",
+      "category": "Motors & Drives",
+      "unit_price": 285.00,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 1
+    },
+    {
+      "sku": "SKU-3345",
+      "description": "Programmable Logic Controller — 24 digital I/O, Ethernet/IP",
+      "category": "Automation",
+      "unit_price": 420.00,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 1
+    },
+    {
+      "sku": "SKU-5500",
+      "description": "Industrial Cable Tray — 300mm wide, galvanized steel, 3m length",
+      "category": "Infrastructure",
+      "unit_price": 22.75,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 10
+    },
+    {
+      "sku": "SKU-5520",
+      "description": "Cable Tray Connector Plate — 300mm, galvanized steel",
+      "category": "Infrastructure",
+      "unit_price": 4.50,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 20
+    },
+    {
+      "sku": "SKU-6010",
+      "description": "Safety Light Curtain — Type 4, 600mm protection height, 14mm resolution",
+      "category": "Safety Equipment",
+      "unit_price": 890.00,
+      "currency": "EUR",
+      "unit_of_measure": "pair",
+      "min_order_quantity": 1
+    },
+    {
+      "sku": "SKU-6200",
+      "description": "Emergency Stop Push Button — 40mm mushroom head, 2NC contacts",
+      "category": "Safety Equipment",
+      "unit_price": 18.50,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 5
+    },
+    {
+      "sku": "SKU-8001",
+      "description": "Thermal Paste — 10g tube, 8.5 W/mK thermal conductivity",
+      "category": "Consumables",
+      "unit_price": 6.80,
+      "currency": "EUR",
+      "unit_of_measure": "tube",
+      "min_order_quantity": 10
+    },
+    {
+      "sku": "SKU-8050",
+      "description": "Industrial Lubricant — Synthetic, 5L canister, ISO VG 68",
+      "category": "Consumables",
+      "unit_price": 42.00,
+      "currency": "EUR",
+      "unit_of_measure": "canister",
+      "min_order_quantity": 2
+    },
+    {
+      "sku": "SKU-9100",
+      "description": "Copper Busbar — 30x5mm cross-section, 1m length, electrolytic grade",
+      "category": "Electrical",
+      "unit_price": 28.00,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 5
+    },
+    {
+      "sku": "SKU-9400",
+      "description": "DIN Rail Terminal Block — 2.5mm², spring clamp, grey",
+      "category": "Electrical",
+      "unit_price": 1.95,
+      "currency": "EUR",
+      "unit_of_measure": "piece",
+      "min_order_quantity": 50
+    }
+  ]
+}

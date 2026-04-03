@@ -1,0 +1,144 @@
+{
+  "approved_vendors": [
+    {
+      "id": "VND-001",
+      "name": "TechParts Bulgaria OOD",
+      "contact_email": "orders@techparts.bg",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-03-31",
+      "address": {
+        "street": "ul. Tsarigradsko Shose 115",
+        "city": "Sofia",
+        "country": "Bulgaria",
+        "postal_code": "1784"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-002",
+      "name": "Acme Corporation Ltd",
+      "contact_email": "procurement@acmecorp.eu",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-06-30",
+      "address": {
+        "street": "Kurfuerstendamm 42",
+        "city": "Berlin",
+        "country": "Germany",
+        "postal_code": "10719"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-003",
+      "name": "Balkan Electronics EOOD",
+      "contact_email": "sales@balkanelectronics.bg",
+      "contract_status": "active",
+      "contract_expiry_date": "2026-12-31",
+      "address": {
+        "street": "bul. Vitosha 89",
+        "city": "Sofia",
+        "country": "Bulgaria",
+        "postal_code": "1463"
+      },
+      "payment_terms": "Net 15"
+    },
+    {
+      "id": "VND-004",
+      "name": "Nordic Supply Solutions AB",
+      "contact_email": "orders@nordicsupply.se",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-01-15",
+      "address": {
+        "street": "Sveavagen 28",
+        "city": "Stockholm",
+        "country": "Sweden",
+        "postal_code": "111 34"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-005",
+      "name": "Plovdiv Industrial Supply AD",
+      "contact_email": "info@plovdivindustrial.bg",
+      "contract_status": "active",
+      "contract_expiry_date": "2026-09-30",
+      "address": {
+        "street": "ul. Gladstone 18",
+        "city": "Plovdiv",
+        "country": "Bulgaria",
+        "postal_code": "4000"
+      },
+      "payment_terms": "Net 15"
+    },
+    {
+      "id": "VND-006",
+      "name": "EuroFasteners GmbH",
+      "contact_email": "verkauf@eurofasteners.de",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-08-31",
+      "address": {
+        "street": "Industriestrasse 7",
+        "city": "Munich",
+        "country": "Germany",
+        "postal_code": "80939"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-007",
+      "name": "MediterraneanParts SRL",
+      "contact_email": "ordini@medparts.it",
+      "contract_status": "expired",
+      "contract_expiry_date": "2025-12-31",
+      "address": {
+        "street": "Via Roma 156",
+        "city": "Milan",
+        "country": "Italy",
+        "postal_code": "20121"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-008",
+      "name": "Stara Zagora Metals OOD",
+      "contact_email": "contact@szmetals.bg",
+      "contract_status": "active",
+      "contract_expiry_date": "2026-11-30",
+      "address": {
+        "street": "ul. Industrialna 34",
+        "city": "Stara Zagora",
+        "country": "Bulgaria",
+        "postal_code": "6000"
+      },
+      "payment_terms": "Net 15"
+    },
+    {
+      "id": "VND-009",
+      "name": "Dutch Logistics BV",
+      "contact_email": "inkoop@dutchlogistics.nl",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-04-30",
+      "address": {
+        "street": "Herengracht 502",
+        "city": "Amsterdam",
+        "country": "Netherlands",
+        "postal_code": "1017 CB"
+      },
+      "payment_terms": "Net 30"
+    },
+    {
+      "id": "VND-010",
+      "name": "Varna Shipyard Components AD",
+      "contact_email": "parts@varnashipyard.bg",
+      "contract_status": "active",
+      "contract_expiry_date": "2027-02-28",
+      "address": {
+        "street": "ul. Devnya 12",
+        "city": "Varna",
+        "country": "Bulgaria",
+        "postal_code": "9000"
+      },
+      "payment_terms": "Net 30"
+    }
+  ]
+}
