@@ -1,0 +1,61 @@
+from enum import StrEnum
+
+
+class OrderStatus(StrEnum):
+    PROCESSING = "PROCESSING"
+    APPROVED = "APPROVED"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    REJECTED = "REJECTED"
+    FAILED = "FAILED"
+
+
+class IssueSeverity(StrEnum):
+    SOFT = "SOFT"
+    HARD = "HARD"
+
+
+class IssueTagType(StrEnum):
+    UNKNOWN_VENDOR = "UNKNOWN_VENDOR"
+    EXPIRED_CONTRACT = "EXPIRED_CONTRACT"
+    VENDOR_FUZZY_MATCH = "VENDOR_FUZZY_MATCH"
+    PRICE_MISMATCH = "PRICE_MISMATCH"
+    OVER_LIMIT = "OVER_LIMIT"
+    TERMS_VIOLATION = "TERMS_VIOLATION"
+    MISSING_FIELD = "MISSING_FIELD"
+    UNKNOWN_PRODUCT = "UNKNOWN_PRODUCT"
+
+
+class ValidationCheckType(StrEnum):
+    VENDOR = "VENDOR"
+    PRICE = "PRICE"
+    POLICY = "POLICY"
+    COMPLETENESS = "COMPLETENESS"
+
+
+class ValidationResult(StrEnum):
+    PASS = "PASS"
+    FAIL = "FAIL"
+    WARNING = "WARNING"
+
+
+class EmailDirection(StrEnum):
+    INBOUND = "INBOUND"
+    OUTBOUND = "OUTBOUND"
+
+
+class EmailType(StrEnum):
+    PO_SUBMISSION = "PO_SUBMISSION"
+    ACKNOWLEDGMENT = "ACKNOWLEDGMENT"
+    CONFIRMATION = "CONFIRMATION"
+    REJECTION = "REJECTION"
+
+
+class ReviewDecisionType(StrEnum):
+    APPROVE = "APPROVE"
+    REJECT = "REJECT"
+
+
+class ProcessingStepStatus(StrEnum):
+    STARTED = "STARTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
