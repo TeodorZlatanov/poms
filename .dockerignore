@@ -1,0 +1,43 @@
+# Version control & IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Documentation
+*.md
+docs/
+LICENSE
+
+# Node / React
+**/node_modules
+**/dist
+**/build
+**/coverage
+
+# Python artifacts
+**/__pycache__
+**/*.pyc
+**/.venv
+**/venv
+**/.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+**/*.egg-info
+**/.coverage
+
+# Environment & secrets
+**/.env
+**/.env.*
+
+# Docker
+**/Dockerfile*
+**/.dockerignore
+docker-compose*.yml
+
+# OS
+**/.DS_Store
+
+# Test & CI
+**/.github
+samples/
