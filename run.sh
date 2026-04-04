@@ -100,14 +100,34 @@ case "${1:-help}" in
     cd "$SCRIPT_DIR/frontend"
     pnpm lint
     ;;
+  frontend-check)
+    info "Running frontend type check, lint, and build..."
+    cd "$SCRIPT_DIR/frontend"
+    npx tsc --noEmit && pnpm lint && pnpm build
+    info "Frontend checks passed."
+    ;;
 
   # --- Full Stack ---
   setup)
     info "Full project setup..."
+    if [ ! -f "$SCRIPT_DIR/backend/.env" ]; then
+      warn "Creating backend/.env from template — edit it with your API keys."
+      cat > "$SCRIPT_DIR/backend/.env" <<'ENVEOF'
+DATABASE_URL=postgresql+asyncpg://poms:poms@localhost:5432/poms
+ANTHROPIC_API_KEY=your-api-key-here
+ENVEOF
+    fi
     "$0" up
     "$0" backend-setup
     "$0" frontend-setup
     info "Setup complete! Run './run.sh dev' and './run.sh frontend-dev' in separate terminals."
+    ;;
+  check)
+    info "Running all checks..."
+    "$0" frontend-check
+    "$0" lint
+    "$0" test
+    info "All checks passed."
     ;;
 
   help|*)
@@ -138,9 +158,11 @@ case "${1:-help}" in
     echo "  frontend-dev    Start frontend dev server (port 3000)"
     echo "  frontend-build  Build frontend for production"
     echo "  frontend-lint   Run ESLint"
+    echo "  frontend-check  Run tsc + lint + build"
     echo ""
     echo "Full Stack:"
-    echo "  setup           Run full project setup"
+    echo "  setup           Run full project setup (DB + deps + .env)"
+    echo "  check           Run all checks (frontend + backend lint + tests)"
     echo ""
     ;;
 esac
