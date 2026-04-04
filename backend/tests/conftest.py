@@ -1,4 +1,5 @@
 import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
@@ -16,7 +17,7 @@ test_session_factory = async_sessionmaker(
 )
 
 
-@pytest.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def setup_db():
     async with test_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
@@ -26,14 +27,14 @@ async def setup_db():
     await test_engine.dispose()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def db_session(setup_db):  # noqa: ARG001
     async with test_session_factory() as session, session.begin():
         yield session
         await session.rollback()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture(loop_scope="session")
 async def client(db_session):
     from main import app
 
