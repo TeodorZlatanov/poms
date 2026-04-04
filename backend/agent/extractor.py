@@ -1,11 +1,11 @@
 import base64
 
 from agno.agent import Agent
-from agno.models.anthropic import Claude
-from anthropic import AsyncAnthropic
 from loguru import logger
+from openai import AsyncAzureOpenAI
 
 from agent.exceptions import ExtractionError
+from agent.llm import get_model
 from agent.prompts import EXTRACTION_SYSTEM, EXTRACTION_USER, OCR_SYSTEM, OCR_USER
 from core.config import settings
 from schemas.extraction import PurchaseOrderExtraction
@@ -31,9 +31,10 @@ async def extract_po_data(
 async def _extract_from_text(content: str) -> PurchaseOrderExtraction:
     """Extract PO data from text content using Agno agent."""
     agent = Agent(
-        model=Claude(id="claude-sonnet-4-5", api_key=settings.anthropic_api_key),
+        model=get_model(),
         instructions=[EXTRACTION_SYSTEM],
-        response_model=PurchaseOrderExtraction,
+        output_schema=PurchaseOrderExtraction,
+        telemetry=False,
     )
     prompt = EXTRACTION_USER.format(content=content)
     response = await agent.arun(prompt)
@@ -48,39 +49,43 @@ async def _extract_from_text(content: str) -> PurchaseOrderExtraction:
 
 
 async def _extract_from_images(images: list[bytes]) -> PurchaseOrderExtraction:
-    """Extract PO data from scanned page images using Claude vision."""
-    client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+    """Extract PO data from scanned page images using Azure OpenAI vision."""
+    client = AsyncAzureOpenAI(
+        api_key=settings.azure_openai_api_key,
+        azure_endpoint=settings.azure_openai_endpoint,
+        api_version=settings.azure_openai_api_version,
+    )
 
     content_blocks: list[dict] = []
     for img_bytes in images:
         content_blocks.append(
             {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": "image/png",
-                    "data": base64.b64encode(img_bytes).decode(),
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{base64.b64encode(img_bytes).decode()}",
                 },
             }
         )
     content_blocks.append({"type": "text", "text": OCR_USER})
 
-    response = await client.messages.create(
-        model="claude-sonnet-4-5",
+    response = await client.chat.completions.create(
+        model=settings.azure_openai_deployment,
         max_tokens=4096,
-        system=OCR_SYSTEM,
-        messages=[{"role": "user", "content": content_blocks}],
+        messages=[
+            {"role": "system", "content": OCR_SYSTEM},
+            {"role": "user", "content": content_blocks},
+        ],
     )
 
-    # Parse the response text as PurchaseOrderExtraction
-    response_text = response.content[0].text
+    response_text = response.choices[0].message.content
     logger.bind(step="extraction").debug("OCR response: {}", response_text)
 
     # Use the Agno agent to structure the OCR output
     agent = Agent(
-        model=Claude(id="claude-sonnet-4-5", api_key=settings.anthropic_api_key),
+        model=get_model(),
         instructions=[EXTRACTION_SYSTEM],
-        response_model=PurchaseOrderExtraction,
+        output_schema=PurchaseOrderExtraction,
+        telemetry=False,
     )
     structured = await agent.arun(
         f"Structure this OCR output into the required JSON format:\n\n{response_text}"

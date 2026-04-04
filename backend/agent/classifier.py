@@ -1,11 +1,10 @@
 from agno.agent import Agent
-from agno.models.anthropic import Claude
 from loguru import logger
 from pydantic import BaseModel
 
 from agent.exceptions import ClassificationError
+from agent.llm import get_small_model
 from agent.prompts import CLASSIFICATION_SYSTEM, CLASSIFICATION_USER
-from core.config import settings
 
 
 class ClassificationResult(BaseModel):
@@ -21,9 +20,10 @@ async def classify_email(
     """Returns True if the email contains a purchase order."""
     try:
         agent = Agent(
-            model=Claude(id="claude-haiku-3-5", api_key=settings.anthropic_api_key),
+            model=get_small_model(),
             instructions=[CLASSIFICATION_SYSTEM],
-            response_model=ClassificationResult,
+            output_schema=ClassificationResult,
+            telemetry=False,
         )
         prompt = CLASSIFICATION_USER.format(
             subject=subject,
