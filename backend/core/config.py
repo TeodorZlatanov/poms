@@ -11,20 +11,27 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://poms:poms_dev_password@localhost:5432/poms"
 
-    # LLM
-    anthropic_api_key: str = ""
+    # Azure OpenAI — Completion
+    azure_openai_api_key: str = ""
+    azure_openai_endpoint: str = ""
+    azure_openai_api_version: str = "2024-12-01-preview"
+    azure_openai_deployment: str = ""
+    azure_openai_deployment_small: str = ""
+
+    # Azure OpenAI — Embeddings
+    azure_openai_embed_api_key: str = ""
+    azure_openai_embed_endpoint: str = ""
+    azure_openai_embed_deployment: str = ""
+    azure_openai_embed_dimensions: int = 3072
 
     # Gmail
     gmail_credentials_path: str = "./credentials.json"
     gmail_token_path: str = "./token.json"
     agent_email: str = "po.processing.demo@gmail.com"
 
-    # Embeddings
-    embedding_provider: str = "openai"
-    openai_api_key: str = ""
-
     # Knowledge base
     lancedb_path: str = "./data/lancedb"
+    knowledge_pdf_dir: str = "../knowledge/pdfs"
 
     # Application
     poll_interval_seconds: int = 30
