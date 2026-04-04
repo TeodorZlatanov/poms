@@ -17,6 +17,9 @@ dependencies = [
     "pymupdf4llm>=0.0.17",
     "pandas>=2.2",
     "openai>=1.50",
+    "google-api-python-client>=2.0",
+    "google-auth-httplib2>=0.2",
+    "google-auth-oauthlib>=1.0",
 ]
 
 [dependency-groups]
@@ -42,6 +45,7 @@ known-first-party = ["core", "models", "schemas", "api", "agent", "services"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+asyncio_default_test_loop_scope = "session"
 addopts = "-v --tb=short"
 
 [tool.hatch.build.targets.wheel]

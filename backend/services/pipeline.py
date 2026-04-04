@@ -1,6 +1,7 @@
 import base64
 import time
 import uuid
+from datetime import datetime
 
 from loguru import logger
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -14,7 +15,11 @@ from agent.validator import (
     validate_prices,
     validate_vendor,
 )
+from core.config import settings
 from models import (
+    EmailDirection,
+    EmailLog,
+    EmailType,
     IssueTag,
     OrderStatus,
     ProcessingLog,
@@ -23,6 +28,7 @@ from models import (
     ValidationCheck,
 )
 from schemas.webhook import WebhookEmailPayload
+from services.email import email_service
 from services.files import (
     detect_file_type,
     extract_images_from_pdf,
@@ -116,6 +122,7 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
             sender_email=payload.from_address,
         )
         session.add(order)
+        await session.flush()
 
         for vr in validation_results:
             check = ValidationCheck(
@@ -135,7 +142,32 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
             )
             session.add(tag)
 
+        # Record inbound email
+        inbound_email = EmailLog(
+            order_id=tracking_id,
+            direction=EmailDirection.INBOUND.value,
+            email_type=EmailType.PO_SUBMISSION.value,
+            sender=payload.from_address,
+            recipient=settings.agent_email,
+            subject=payload.subject,
+            sent_at=datetime.fromisoformat(payload.received_at.replace("Z", "+00:00")).replace(
+                tzinfo=None
+            ),
+        )
+        session.add(inbound_email)
+
         await session.commit()
+
+        # Step 7: Send email response (best-effort)
+        try:
+            if status == OrderStatus.APPROVED:
+                await email_service.send_confirmation(order, session)
+            else:
+                await email_service.send_acknowledgment(order, session)
+            await session.commit()
+        except Exception:
+            log.warning("Failed to send email response — continuing")
+
         log.info("Pipeline complete — status={}", status.value)
         return tracking_id
 
