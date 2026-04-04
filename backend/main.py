@@ -12,7 +12,7 @@ from api.routes.reviews import router as reviews_router
 from api.routes.webhook import router as webhook_router
 from core.observability import setup_logging
 from services.email import email_service
-from services.knowledge import knowledge_base
+from services.knowledge import knowledge_service
 from services.poller import start_polling
 
 
@@ -28,10 +28,8 @@ async def lifespan(_app: FastAPI):
     await asyncio.get_event_loop().run_in_executor(None, command.upgrade, alembic_cfg, "head")
     logger.info("Database migrations complete.")
 
-    # Initialize knowledge base
-    logger.info("Initializing knowledge base...")
-    await knowledge_base.initialize()
-    logger.info("Knowledge base ready.")
+    # Connect to RAG knowledge base (must be pre-built via scripts.ingest_knowledge)
+    await knowledge_service.initialize()
 
     # Authenticate email service and start polling
     poller_task = None

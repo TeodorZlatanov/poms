@@ -1,7 +1,13 @@
 import asyncio
+import contextlib
 import io
 
 import pandas as pd
+
+# Activate GNN-based layout detection BEFORE importing pymupdf4llm — order is mandatory
+with contextlib.suppress(ImportError):
+    import pymupdf.layout  # noqa: F401
+
 import pymupdf
 import pymupdf4llm
 
