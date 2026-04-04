@@ -1,49 +1,52 @@
 from loguru import logger
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from models.enums import IssueSeverity, IssueTagType, ValidationCheckType, ValidationResult
 from schemas.extraction import PurchaseOrderExtraction
 from schemas.validation import IssueTagResult, ValidationCheckResult
-from services.knowledge import knowledge_base
+from services import reference
 
 
-async def validate_vendor(extraction: PurchaseOrderExtraction) -> ValidationCheckResult:
-    """Check vendor against approved vendor registry."""
+async def validate_vendor(
+    extraction: PurchaseOrderExtraction, session: AsyncSession
+) -> ValidationCheckResult:
+    """Check vendor against approved vendor registry in the database."""
     tags: list[IssueTagResult] = []
     vendor_name = extraction.vendor.name
 
     # Try exact match
-    vendor = knowledge_base.lookup_vendor(vendor_name)
+    vendor = await reference.lookup_vendor(session, vendor_name)
     if vendor:
-        if vendor["contract_status"] == "expired":
+        if vendor.contract_status == "expired":
             tags.append(
                 IssueTagResult(
                     tag=IssueTagType.EXPIRED_CONTRACT,
                     severity=IssueSeverity.HARD,
                     description=f"Vendor '{vendor_name}' has an expired contract "
-                    f"(expired {vendor.get('contract_expiry_date', 'unknown')})",
+                    f"(expired {vendor.contract_expiry_date or 'unknown'})",
                 )
             )
             result = ValidationResult.FAIL
         else:
             result = ValidationResult.PASS
         logger.bind(step="validation").info(
-            "Vendor exact match: {} — status={}", vendor_name, vendor["contract_status"]
+            "Vendor exact match: {} — status={}", vendor_name, vendor.contract_status
         )
     else:
         # Try fuzzy match
-        fuzzy = knowledge_base.fuzzy_match_vendor(vendor_name)
+        fuzzy = await reference.fuzzy_match_vendor(session, vendor_name)
         if fuzzy:
             tags.append(
                 IssueTagResult(
                     tag=IssueTagType.VENDOR_FUZZY_MATCH,
                     severity=IssueSeverity.SOFT,
                     description=f"Vendor '{vendor_name}' is a close match to "
-                    f"registered vendor '{fuzzy['name']}'",
+                    f"registered vendor '{fuzzy.name}'",
                 )
             )
             result = ValidationResult.WARNING
             logger.bind(step="validation").info(
-                "Vendor fuzzy match: {} → {}", vendor_name, fuzzy["name"]
+                "Vendor fuzzy match: {} → {}", vendor_name, fuzzy.name
             )
         else:
             tags.append(
@@ -64,8 +67,10 @@ async def validate_vendor(extraction: PurchaseOrderExtraction) -> ValidationChec
     )
 
 
-async def validate_prices(extraction: PurchaseOrderExtraction) -> ValidationCheckResult:
-    """Check line item prices against product catalog."""
+async def validate_prices(
+    extraction: PurchaseOrderExtraction, session: AsyncSession
+) -> ValidationCheckResult:
+    """Check line item prices against product catalog in the database."""
     tags: list[IssueTagResult] = []
     details: dict = {"items_checked": 0, "mismatches": []}
     worst_result = ValidationResult.PASS
@@ -74,7 +79,7 @@ async def validate_prices(extraction: PurchaseOrderExtraction) -> ValidationChec
         if not item.sku:
             continue
 
-        product = knowledge_base.lookup_product_by_sku(item.sku)
+        product = await reference.lookup_product_by_sku(session, item.sku)
         if not product:
             tags.append(
                 IssueTagResult(
@@ -91,7 +96,7 @@ async def validate_prices(extraction: PurchaseOrderExtraction) -> ValidationChec
         if item.unit_price is None:
             continue
 
-        catalog_price = product["unit_price"]
+        catalog_price = product.unit_price
         if catalog_price <= 0:
             continue
 
@@ -127,8 +132,10 @@ async def validate_prices(extraction: PurchaseOrderExtraction) -> ValidationChec
     )
 
 
-async def validate_policy(extraction: PurchaseOrderExtraction) -> ValidationCheckResult:
-    """Check against procurement policies (dept limits, payment terms)."""
+async def validate_policy(
+    extraction: PurchaseOrderExtraction, session: AsyncSession
+) -> ValidationCheckResult:
+    """Check against procurement policies (dept limits, payment terms) in the database."""
     tags: list[IssueTagResult] = []
     details: dict = {}
     worst_result = ValidationResult.PASS
@@ -136,7 +143,7 @@ async def validate_policy(extraction: PurchaseOrderExtraction) -> ValidationChec
     # Check department spending limit
     department = extraction.requester.department if extraction.requester else None
     if department and extraction.total_amount is not None:
-        limit = knowledge_base.get_department_limit(department)
+        limit = await reference.get_department_limit(session, department)
         if limit is not None:
             details["department"] = department
             details["limit"] = limit
@@ -156,7 +163,7 @@ async def validate_policy(extraction: PurchaseOrderExtraction) -> ValidationChec
     if extraction.payment_terms:
         terms = extraction.payment_terms.strip().lower()
         details["payment_terms"] = extraction.payment_terms
-        allowed = {"net 15", "net 30", "due on receipt"}
+        allowed = await reference.get_allowed_payment_terms(session)
         if terms in allowed:
             pass  # OK
         elif "net" in terms:
@@ -201,7 +208,7 @@ async def validate_policy(extraction: PurchaseOrderExtraction) -> ValidationChec
 
 
 async def validate_completeness(extraction: PurchaseOrderExtraction) -> ValidationCheckResult:
-    """Rule-based check for required fields. No LLM needed."""
+    """Rule-based check for required fields. No LLM or DB needed."""
     tags: list[IssueTagResult] = []
 
     # Hard-required fields

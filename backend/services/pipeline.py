@@ -8,6 +8,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from agent.classifier import classify_email
 from agent.extractor import extract_po_data
+from agent.rag_validator import apply_rag_adjustments, rag_validate
 from agent.router import route_order
 from agent.validator import (
     validate_completeness,
@@ -26,6 +27,7 @@ from models import (
     ProcessingStepStatus,
     PurchaseOrder,
     ValidationCheck,
+    ValidationCheckType,
 )
 from schemas.webhook import WebhookEmailPayload
 from services.email import email_service
@@ -38,9 +40,13 @@ from services.files import (
 
 
 async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> uuid.UUID:
-    """Full pipeline: classify -> extract -> validate -> route -> persist."""
+    """Full pipeline: classify -> extract -> validate -> RAG validate -> route -> persist."""
     tracking_id = uuid.uuid4()
     log = logger.bind(correlation_id=str(tracking_id))
+
+    # Collect processing logs in memory — they reference the order via FK,
+    # so we can't insert them until the order row exists.
+    pending_logs: list[dict] = []
 
     try:
         # Step 1: Classification
@@ -51,7 +57,7 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
             body=payload.body,
             filenames=[a.filename for a in payload.attachments],
         )
-        await _log_step(session, tracking_id, "classification", step_start, {"is_po": is_po})
+        pending_logs.append(_make_log(tracking_id, "classification", step_start, {"is_po": is_po}))
 
         if not is_po:
             log.info("Email classified as non-PO, skipping")
@@ -74,36 +80,57 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
                 images = [file_data]
             else:
                 content = await extract_text_from_pdf(file_data)
-        await _log_step(
-            session, tracking_id, "file_processing", step_start, {"file_type": file_type}
+        pending_logs.append(
+            _make_log(tracking_id, "file_processing", step_start, {"file_type": file_type})
         )
 
         # Step 3: Extraction
         step_start = time.monotonic()
         extraction = await extract_po_data(content=content, images=images)
-        await _log_step(session, tracking_id, "extraction", step_start)
+        pending_logs.append(_make_log(tracking_id, "extraction", step_start))
 
-        # Step 4: Validation
+        # Step 4: Deterministic validation (against database)
         step_start = time.monotonic()
         validation_results = [
-            await validate_vendor(extraction),
-            await validate_prices(extraction),
-            await validate_policy(extraction),
+            await validate_vendor(extraction, session),
+            await validate_prices(extraction, session),
+            await validate_policy(extraction, session),
             await validate_completeness(extraction),
         ]
         all_tags = []
         for vr in validation_results:
             all_tags.extend(vr.tags)
-        await _log_step(
-            session, tracking_id, "validation", step_start, {"tag_count": len(all_tags)}
+        pending_logs.append(
+            _make_log(tracking_id, "validation", step_start, {"tag_count": len(all_tags)})
         )
 
-        # Step 5: Routing
+        # Step 4b: RAG validation (reviews deterministic results against knowledge base)
         step_start = time.monotonic()
-        status = route_order(all_tags)
-        await _log_step(session, tracking_id, "routing", step_start, {"status": status.value})
+        all_details = {vr.check_type.value: vr.details for vr in validation_results}
+        rag_result = await rag_validate(extraction, all_tags, all_details)
+        final_tags = apply_rag_adjustments(all_tags, rag_result)
+        pending_logs.append(
+            _make_log(
+                tracking_id,
+                "rag_validation",
+                step_start,
+                {
+                    "adjustments": len(rag_result.adjustments),
+                    "new_tags": len(rag_result.new_tags),
+                    "tags_before": len(all_tags),
+                    "tags_after": len(final_tags),
+                },
+            )
+        )
 
-        # Step 6: Persist
+        # Step 5: Routing (uses final tags after RAG adjustments)
+        step_start = time.monotonic()
+        status = route_order(final_tags)
+        pending_logs.append(
+            _make_log(tracking_id, "routing", step_start, {"status": status.value})
+        )
+
+        # Step 6: Persist — order first (FK parent), then children
         order = PurchaseOrder(
             id=tracking_id,
             po_number=extraction.po_number,
@@ -124,37 +151,53 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
         session.add(order)
         await session.flush()
 
+        # Now safe to insert FK children
         for vr in validation_results:
-            check = ValidationCheck(
-                order_id=tracking_id,
-                check_type=vr.check_type.value,
-                result=vr.result.value,
-                details=vr.details,
+            session.add(
+                ValidationCheck(
+                    order_id=tracking_id,
+                    check_type=vr.check_type.value,
+                    result=vr.result.value,
+                    details=vr.details,
+                )
             )
-            session.add(check)
 
-        for tag_result in all_tags:
-            tag = IssueTag(
+        session.add(
+            ValidationCheck(
                 order_id=tracking_id,
-                tag=tag_result.tag.value,
-                severity=tag_result.severity.value,
-                description=tag_result.description,
+                check_type=ValidationCheckType.RAG.value,
+                result="PASS" if not final_tags else "WARNING",
+                details=rag_result.model_dump(),
             )
-            session.add(tag)
+        )
+
+        for tag_result in final_tags:
+            session.add(
+                IssueTag(
+                    order_id=tracking_id,
+                    tag=tag_result.tag.value,
+                    severity=tag_result.severity.value,
+                    description=tag_result.description,
+                )
+            )
+
+        for log_data in pending_logs:
+            session.add(ProcessingLog(**log_data))
 
         # Record inbound email
-        inbound_email = EmailLog(
-            order_id=tracking_id,
-            direction=EmailDirection.INBOUND.value,
-            email_type=EmailType.PO_SUBMISSION.value,
-            sender=payload.from_address,
-            recipient=settings.agent_email,
-            subject=payload.subject,
-            sent_at=datetime.fromisoformat(payload.received_at.replace("Z", "+00:00")).replace(
-                tzinfo=None
-            ),
+        session.add(
+            EmailLog(
+                order_id=tracking_id,
+                direction=EmailDirection.INBOUND.value,
+                email_type=EmailType.PO_SUBMISSION.value,
+                sender=payload.from_address,
+                recipient=settings.agent_email,
+                subject=payload.subject,
+                sent_at=datetime.fromisoformat(
+                    payload.received_at.replace("Z", "+00:00")
+                ).replace(tzinfo=None),
+            )
         )
-        session.add(inbound_email)
 
         await session.commit()
 
@@ -179,19 +222,17 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
         raise
 
 
-async def _log_step(
-    session: AsyncSession,
+def _make_log(
     order_id: uuid.UUID,
     step: str,
     start_time: float,
     metadata: dict | None = None,
-) -> None:
-    duration_ms = int((time.monotonic() - start_time) * 1000)
-    log_entry = ProcessingLog(
-        order_id=order_id,
-        step=step,
-        status=ProcessingStepStatus.COMPLETED.value,
-        duration_ms=duration_ms,
-        metadata_=metadata,
-    )
-    session.add(log_entry)
+) -> dict:
+    """Build a processing log dict (inserted after order is created)."""
+    return {
+        "order_id": order_id,
+        "step": step,
+        "status": ProcessingStepStatus.COMPLETED.value,
+        "duration_ms": int((time.monotonic() - start_time) * 1000),
+        "metadata_": metadata,
+    }

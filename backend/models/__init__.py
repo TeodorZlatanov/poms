@@ -14,10 +14,12 @@ from models.enums import (
 )
 from models.order import PurchaseOrder
 from models.processing import ProcessingLog
+from models.reference import ApprovedVendor, ProcurementPolicy, ProductCatalog
 from models.review import ReviewDecision
 from models.validation import IssueTag, ValidationCheck
 
 __all__ = [
+    "ApprovedVendor",
     "EmailDirection",
     "EmailLog",
     "EmailType",
@@ -27,6 +29,8 @@ __all__ = [
     "OrderStatus",
     "ProcessingLog",
     "ProcessingStepStatus",
+    "ProcurementPolicy",
+    "ProductCatalog",
     "PurchaseOrder",
     "ReviewDecision",
     "ReviewDecisionType",

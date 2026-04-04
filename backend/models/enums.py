@@ -30,6 +30,7 @@ class ValidationCheckType(StrEnum):
     PRICE = "PRICE"
     POLICY = "POLICY"
     COMPLETENESS = "COMPLETENESS"
+    RAG = "RAG"
 
 
 class ValidationResult(StrEnum):
