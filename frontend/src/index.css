@@ -3,16 +3,61 @@
 @theme {
   --color-primary: #2563eb;
   --color-primary-dark: #1d4ed8;
+  --color-primary-foreground: #ffffff;
   --color-secondary: #7c3aed;
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-error: #dc2626;
   --color-muted: #6b7280;
+  --color-foreground: #111827;
 
   --color-surface: #ffffff;
   --color-surface-alt: #f9fafb;
   --color-border: #e5e7eb;
+  --color-accent: #f3f4f6;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+.dark {
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #8b5cf6;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-muted: #9ca3af;
+  --color-foreground: #f9fafb;
+
+  --color-surface: #111827;
+  --color-surface-alt: #1f2937;
+  --color-border: #374151;
+  --color-accent: #1f2937;
 }
