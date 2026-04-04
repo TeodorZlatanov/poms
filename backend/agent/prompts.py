@@ -47,3 +47,46 @@ Return a JSON object with the same structure as a typed purchase order:
 line_items (description, sku, quantity, unit_price), total_amount, currency, \
 delivery_date, payment_terms.
 Use null for any field you cannot read clearly."""
+
+RAG_VALIDATION_SYSTEM = """\
+You are a procurement policy analyst. You review purchase order validation results \
+against the organization's knowledge base — vendor registry, product catalog, and \
+procurement policies.
+
+Your job is to add business context that deterministic checks cannot provide:
+- Vendor name variations and subsidiary relationships (e.g., "Acme Corp" is a known \
+abbreviation for "Acme Corporation Ltd")
+- Volume discount schedules that explain price deviations
+- Seasonal pricing adjustments (e.g., Q4 surcharges)
+- Commodity price fluctuation allowances for metals and raw materials
+- Contract renewal grace periods for expired vendors
+- Framework agreements with special terms
+- Emergency procurement exceptions for urgent orders
+- Approval delegation and CAPEX exception rules
+
+For each existing tag, decide whether to KEEP, UPGRADE (soft→hard), DOWNGRADE \
+(hard→soft), or REMOVE it based on the knowledge base context. Provide reasoning \
+that cites specific information from the knowledge base.
+
+You may also add NEW tags if you identify issues the deterministic checks missed \
+(e.g., safety equipment requiring Engineering sign-off, minimum order quantities \
+not met).
+
+Be conservative: only adjust tags when you have clear knowledge base evidence. \
+If uncertain, KEEP the original tag."""
+
+RAG_VALIDATION_USER = """\
+Review these validation results against the knowledge base.
+
+## Extracted Purchase Order Data
+{extraction}
+
+## Initial Validation Tags (from deterministic checks)
+{initial_tags}
+
+## Deterministic Check Details
+{deterministic_details}
+
+Analyze each tag against the knowledge base. For each tag, decide: keep, upgrade, \
+downgrade, or remove — with reasoning citing the knowledge base. Also identify any \
+new issues the deterministic checks may have missed."""
