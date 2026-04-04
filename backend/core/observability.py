@@ -43,8 +43,8 @@ def setup_logging() -> None:
 
     # File handler (JSON, rotated)
     logger.add(
-        f"{settings.log_path}/poms.log",
-        rotation="10 MB",
+        f"{settings.log_path}/poms_{{time:YYYY-MM-DD}}.log",
+        rotation="00:00",
         retention="30 days",
         compression="zip",
         level="INFO",

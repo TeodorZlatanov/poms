@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from agent.rag_validator import RAGValidationResult
 from schemas.webhook import AttachmentPayload, WebhookEmailPayload
 
 
@@ -43,7 +44,12 @@ def _empty_result():
     return ValidationCheckResult(check_type="VENDOR", result="PASS", details={}, tags=[])
 
 
+def _empty_rag_result():
+    return RAGValidationResult(adjustments=[], new_tags=[], summary="No issues found")
+
+
 class TestPipelineEmailWiring:
+    @patch("services.pipeline.rag_validate", new_callable=AsyncMock)
     @patch("services.pipeline.email_service")
     @patch("services.pipeline.classify_email", new_callable=AsyncMock)
     @patch("services.pipeline.extract_po_data", new_callable=AsyncMock)
@@ -60,6 +66,7 @@ class TestPipelineEmailWiring:
         mock_extract,
         mock_classify,
         mock_email_svc,
+        mock_rag_validate,
     ):
         """Verify pipeline creates an inbound EmailLog. Uses mock session."""
         from models import EmailLog
@@ -70,6 +77,7 @@ class TestPipelineEmailWiring:
         mock_prices.return_value = _empty_result()
         mock_policy.return_value = _empty_result()
         mock_completeness.return_value = _empty_result()
+        mock_rag_validate.return_value = _empty_rag_result()
         mock_email_svc.send_confirmation = AsyncMock()
 
         session = AsyncMock()
@@ -87,6 +95,7 @@ class TestPipelineEmailWiring:
         assert inbound_emails[0].email_type == "PO_SUBMISSION"
         assert inbound_emails[0].sender == "sender@example.com"
 
+    @patch("services.pipeline.rag_validate", new_callable=AsyncMock)
     @patch("services.pipeline.email_service")
     @patch("services.pipeline.classify_email", new_callable=AsyncMock)
     @patch("services.pipeline.extract_po_data", new_callable=AsyncMock)
@@ -103,6 +112,7 @@ class TestPipelineEmailWiring:
         mock_extract,
         mock_classify,
         mock_email_svc,
+        mock_rag_validate,
         db_session,
     ):
         mock_classify.return_value = True
@@ -111,6 +121,7 @@ class TestPipelineEmailWiring:
         mock_prices.return_value = _empty_result()
         mock_policy.return_value = _empty_result()
         mock_completeness.return_value = _empty_result()
+        mock_rag_validate.return_value = _empty_rag_result()
         mock_email_svc.send_confirmation = AsyncMock()
 
         from services.pipeline import process_email
@@ -120,6 +131,7 @@ class TestPipelineEmailWiring:
 
         mock_email_svc.send_confirmation.assert_called_once()
 
+    @patch("services.pipeline.rag_validate", new_callable=AsyncMock)
     @patch("services.pipeline.email_service")
     @patch("services.pipeline.classify_email", new_callable=AsyncMock)
     @patch("services.pipeline.extract_po_data", new_callable=AsyncMock)
@@ -136,6 +148,7 @@ class TestPipelineEmailWiring:
         mock_extract,
         mock_classify,
         mock_email_svc,
+        mock_rag_validate,
         db_session,
     ):
         from schemas.validation import IssueTagResult, ValidationCheckResult
@@ -153,6 +166,8 @@ class TestPipelineEmailWiring:
         mock_prices.return_value = tagged_result
         mock_policy.return_value = _empty_result()
         mock_completeness.return_value = _empty_result()
+        # RAG keeps all tags as-is
+        mock_rag_validate.return_value = _empty_rag_result()
         mock_email_svc.send_acknowledgment = AsyncMock()
 
         from services.pipeline import process_email
