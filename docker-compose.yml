@@ -21,49 +21,8 @@ services:
       retries: 5
       start_period: 30s
 
-  pgadmin:
-    image: dpage/pgadmin4:9
-    container_name: poms-pgadmin
-    restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@poms.dev}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - poms-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    configs:
-      - source: pgadmin_servers
-        target: /pgadmin4/servers.json
-        mode: 0444
-
-configs:
-  pgadmin_servers:
-    content: |
-      {
-        "Servers": {
-          "1": {
-            "Name": "POMS PostgreSQL",
-            "Group": "Servers",
-            "Host": "postgres",
-            "Port": 5432,
-            "MaintenanceDB": "poms",
-            "Username": "poms",
-            "SSLMode": "prefer"
-          }
-        }
-      }
-
 volumes:
   pgdata:
-  pgadmin_data:
 
 networks:
   poms-network:
