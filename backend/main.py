@@ -50,7 +50,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(
-    title="POMS — Purchase Order Management System",
+    title="POMS - API",
     description="AI-powered purchase order processing pipeline",
     version="0.1.0",
     lifespan=lifespan,

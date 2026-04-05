@@ -35,8 +35,8 @@ def upgrade() -> None:
         ),
         sa.Column("address", sa.JSON(), nullable=True),
         sa.Column("payment_terms", sqlmodel.sql.sqltypes.AutoString(length=50), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("vendor_id"),
     )
@@ -56,8 +56,8 @@ def upgrade() -> None:
         sa.Column("currency", sqlmodel.sql.sqltypes.AutoString(length=10), nullable=False),
         sa.Column("unit_of_measure", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("min_order_quantity", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("sku"),
     )
@@ -70,8 +70,8 @@ def upgrade() -> None:
         sa.Column("threshold_value", sa.Float(), nullable=True),
         sa.Column("allowed_values", sa.JSON(), nullable=True),
         sa.Column("description", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 

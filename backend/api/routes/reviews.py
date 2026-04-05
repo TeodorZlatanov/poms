@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from loguru import logger
@@ -7,6 +6,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.database import get_session
+from core.time import utc_now
 from models import OrderStatus, PurchaseOrder, ReviewDecision, ReviewDecisionType
 from schemas.reviews import ReviewRequest, ReviewResponse
 from services.email import email_service
@@ -51,7 +51,7 @@ async def submit_review(
 
     # Update order status
     order.status = new_status
-    order.updated_at = datetime.utcnow()
+    order.updated_at = utc_now()
     session.add(order)
 
     await session.flush()

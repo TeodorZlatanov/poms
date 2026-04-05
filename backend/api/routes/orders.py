@@ -118,7 +118,6 @@ async def get_order(
         delivery_date=order.delivery_date,
         payment_terms=order.payment_terms,
         status=order.status,
-        confidence_score=order.confidence_score,
         original_filename=order.original_filename,
         sender_email=order.sender_email,
         created_at=order.created_at,

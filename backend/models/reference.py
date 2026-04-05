@@ -2,8 +2,10 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON
+from sqlalchemy import JSON, DateTime
 from sqlmodel import Column, Field, SQLModel
+
+from core.time import utc_now
 
 
 class ApprovedVendor(SQLModel, table=True):
@@ -17,8 +19,14 @@ class ApprovedVendor(SQLModel, table=True):
     contract_expiry_date: str | None = Field(default=None, max_length=20)
     address: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     payment_terms: str = Field(max_length=50)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
 
 class ProductCatalog(SQLModel, table=True):
@@ -32,8 +40,14 @@ class ProductCatalog(SQLModel, table=True):
     currency: str = Field(max_length=10)
     unit_of_measure: str = Field(max_length=20)
     min_order_quantity: int
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
 
 
 class ProcurementPolicy(SQLModel, table=True):
@@ -45,5 +59,11 @@ class ProcurementPolicy(SQLModel, table=True):
     threshold_value: float | None = Field(default=None)
     allowed_values: dict[str, Any] | None = Field(default=None, sa_column=Column(JSON))
     description: str | None = Field(default=None, max_length=500)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )

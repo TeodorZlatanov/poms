@@ -5,7 +5,7 @@ from loguru import logger
 from core.config import settings
 from core.database import async_session_factory
 from services.email import email_service
-from services.pipeline import process_email
+from services.pipeline import create_placeholder_orders, process_placeholders
 
 _shutdown = False
 
@@ -24,8 +24,14 @@ async def poll_once() -> int:
     processed = 0
     for payload in payloads:
         try:
+            # Commit placeholders first so they appear in the dashboard
+            # immediately, then run the full pipeline.
             async with async_session_factory() as session:
-                await process_email(payload, session)
+                batch_id, placeholder_ids = await create_placeholder_orders(payload, session)
+                await session.commit()
+
+            async with async_session_factory() as session:
+                await process_placeholders(payload, batch_id, placeholder_ids, session)
                 processed += 1
         except Exception:
             logger.exception("Failed to process polled email from {}", payload.from_address)

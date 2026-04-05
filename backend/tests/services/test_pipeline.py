@@ -103,7 +103,7 @@ class TestPipelineEmailWiring:
     @patch("services.pipeline.validate_prices", new_callable=AsyncMock)
     @patch("services.pipeline.validate_policy", new_callable=AsyncMock)
     @patch("services.pipeline.validate_completeness", new_callable=AsyncMock)
-    async def test_pipeline_sends_confirmation_on_approval(
+    async def test_pipeline_sends_batch_summary_on_approval(
         self,
         mock_completeness,
         mock_policy,
@@ -122,14 +122,18 @@ class TestPipelineEmailWiring:
         mock_policy.return_value = _empty_result()
         mock_completeness.return_value = _empty_result()
         mock_rag_validate.return_value = _empty_rag_result()
-        mock_email_svc.send_confirmation = AsyncMock()
+        mock_email_svc.send_batch_summary = AsyncMock()
 
         from services.pipeline import process_email
 
         async with db_session.begin_nested():
             await process_email(_make_payload(), db_session)
 
-        mock_email_svc.send_confirmation.assert_called_once()
+        mock_email_svc.send_batch_summary.assert_called_once()
+        # Verify the single order passed in was routed to APPROVED
+        orders_arg = mock_email_svc.send_batch_summary.call_args.args[0]
+        assert len(orders_arg) == 1
+        assert orders_arg[0].status == "APPROVED"
 
     @patch("services.pipeline.rag_validate", new_callable=AsyncMock)
     @patch("services.pipeline.email_service")
@@ -139,7 +143,7 @@ class TestPipelineEmailWiring:
     @patch("services.pipeline.validate_prices", new_callable=AsyncMock)
     @patch("services.pipeline.validate_policy", new_callable=AsyncMock)
     @patch("services.pipeline.validate_completeness", new_callable=AsyncMock)
-    async def test_pipeline_sends_ack_on_flagged(
+    async def test_pipeline_sends_batch_summary_on_flagged(
         self,
         mock_completeness,
         mock_policy,
@@ -168,11 +172,15 @@ class TestPipelineEmailWiring:
         mock_completeness.return_value = _empty_result()
         # RAG keeps all tags as-is
         mock_rag_validate.return_value = _empty_rag_result()
-        mock_email_svc.send_acknowledgment = AsyncMock()
+        mock_email_svc.send_batch_summary = AsyncMock()
 
         from services.pipeline import process_email
 
         async with db_session.begin_nested():
             await process_email(_make_payload(), db_session)
 
-        mock_email_svc.send_acknowledgment.assert_called_once()
+        mock_email_svc.send_batch_summary.assert_called_once()
+        # Soft tag only → routed to PENDING_REVIEW
+        orders_arg = mock_email_svc.send_batch_summary.call_args.args[0]
+        assert len(orders_arg) == 1
+        assert orders_arg[0].status == "PENDING_REVIEW"

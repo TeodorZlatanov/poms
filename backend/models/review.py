@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Index
+from sqlalchemy import Column, DateTime, Index
 from sqlmodel import Field, SQLModel
+
+from core.time import utc_now
 
 
 class ReviewDecision(SQLModel, table=True):
@@ -13,4 +15,7 @@ class ReviewDecision(SQLModel, table=True):
     order_id: uuid.UUID = Field(foreign_key="purchase_orders.id")
     decision: str = Field(max_length=20)
     comment: str | None = Field(default=None, max_length=1000)
-    decided_at: datetime = Field(default_factory=datetime.utcnow)
+    decided_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )

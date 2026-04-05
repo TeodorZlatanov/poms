@@ -21,11 +21,12 @@ async def webhook_client():
 
 
 class TestWebhookEndpoint:
-    @patch("api.routes.webhook.process_email", new_callable=AsyncMock)
+    @patch("api.routes.webhook.process_placeholders", new_callable=AsyncMock)
+    @patch("api.routes.webhook.create_placeholder_orders", new_callable=AsyncMock)
     async def test_valid_payload_returns_202(
-        self, mock_pipeline, webhook_client, sample_email_payload
+        self, mock_create, _mock_process, webhook_client, sample_email_payload
     ):
-        mock_pipeline.return_value = uuid.uuid4()
+        mock_create.return_value = (uuid.uuid4(), [uuid.uuid4()])
         response = await webhook_client.post("/api/webhook/email", json=sample_email_payload())
         assert response.status_code == 202
         data = response.json()
@@ -36,11 +37,12 @@ class TestWebhookEndpoint:
         response = await webhook_client.post("/api/webhook/email", json={"subject": "test"})
         assert response.status_code == 422
 
-    @patch("api.routes.webhook.process_email", new_callable=AsyncMock)
+    @patch("api.routes.webhook.process_placeholders", new_callable=AsyncMock)
+    @patch("api.routes.webhook.create_placeholder_orders", new_callable=AsyncMock)
     async def test_empty_attachments_accepted(
-        self, mock_pipeline, webhook_client, sample_email_payload
+        self, mock_create, _mock_process, webhook_client, sample_email_payload
     ):
-        mock_pipeline.return_value = uuid.uuid4()
+        mock_create.return_value = (uuid.uuid4(), [])
         response = await webhook_client.post(
             "/api/webhook/email", json=sample_email_payload(attachments=[])
         )

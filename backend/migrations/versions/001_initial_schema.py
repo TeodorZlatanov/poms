@@ -38,17 +38,19 @@ def upgrade() -> None:
         sa.Column("delivery_date", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=True),
         sa.Column("payment_terms", sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
         sa.Column("status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
-        sa.Column("confidence_score", sa.Float(), nullable=True),
         sa.Column("original_filename", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
         sa.Column("sender_email", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.Column("batch_id", sa.Uuid(), nullable=True),
+        sa.Column("batch_email_message_id", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
         "ix_purchase_orders_created_at", "purchase_orders", ["created_at"], unique=False
     )
     op.create_index("ix_purchase_orders_status", "purchase_orders", ["status"], unique=False)
+    op.create_index("ix_purchase_orders_batch_id", "purchase_orders", ["batch_id"], unique=False)
     op.create_table(
         "email_logs",
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -58,7 +60,7 @@ def upgrade() -> None:
         sa.Column("sender", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
         sa.Column("recipient", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
         sa.Column("subject", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
-        sa.Column("sent_at", sa.DateTime(), nullable=False),
+        sa.Column("sent_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["purchase_orders.id"],
@@ -73,7 +75,7 @@ def upgrade() -> None:
         sa.Column("tag", sqlmodel.sql.sqltypes.AutoString(length=30), nullable=False),
         sa.Column("severity", sqlmodel.sql.sqltypes.AutoString(length=10), nullable=False),
         sa.Column("description", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["purchase_orders.id"],
@@ -89,7 +91,7 @@ def upgrade() -> None:
         sa.Column("status", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("duration_ms", sa.Integer(), nullable=True),
         sa.Column("metadata", sa.JSON(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["purchase_orders.id"],
@@ -103,7 +105,7 @@ def upgrade() -> None:
         sa.Column("order_id", sa.Uuid(), nullable=False),
         sa.Column("decision", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("comment", sqlmodel.sql.sqltypes.AutoString(length=1000), nullable=True),
-        sa.Column("decided_at", sa.DateTime(), nullable=False),
+        sa.Column("decided_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["purchase_orders.id"],
@@ -118,7 +120,7 @@ def upgrade() -> None:
         sa.Column("check_type", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("result", sqlmodel.sql.sqltypes.AutoString(length=20), nullable=False),
         sa.Column("details", sa.JSON(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(
             ["order_id"],
             ["purchase_orders.id"],
@@ -143,6 +145,7 @@ def downgrade() -> None:
     op.drop_table("issue_tags")
     op.drop_index("ix_email_logs_order_id", table_name="email_logs")
     op.drop_table("email_logs")
+    op.drop_index("ix_purchase_orders_batch_id", table_name="purchase_orders")
     op.drop_index("ix_purchase_orders_status", table_name="purchase_orders")
     op.drop_index("ix_purchase_orders_created_at", table_name="purchase_orders")
     op.drop_table("purchase_orders")

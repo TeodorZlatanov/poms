@@ -17,6 +17,7 @@ from agent.validator import (
     validate_vendor,
 )
 from core.config import settings
+from core.time import utc_now
 from models import (
     EmailDirection,
     EmailLog,
@@ -29,67 +30,181 @@ from models import (
     ValidationCheck,
     ValidationCheckType,
 )
-from schemas.webhook import WebhookEmailPayload
+from schemas.webhook import AttachmentPayload, WebhookEmailPayload
 from services.email import email_service
 from services.files import (
     detect_file_type,
     extract_images_from_pdf,
     extract_text_from_csv,
     extract_text_from_pdf,
+    extract_text_from_xlsx,
 )
 
 
-async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> uuid.UUID:
-    """Full pipeline: classify -> extract -> validate -> RAG validate -> route -> persist."""
-    tracking_id = uuid.uuid4()
-    log = logger.bind(correlation_id=str(tracking_id))
+async def create_placeholder_orders(
+    payload: WebhookEmailPayload,
+    session: AsyncSession,
+) -> tuple[uuid.UUID, list[uuid.UUID]]:
+    """Create one PROCESSING placeholder per attachment so the UI can display them
+    immediately. Returns (batch_id, placeholder_ids).
 
-    # Collect processing logs in memory — they reference the order via FK,
-    # so we can't insert them until the order row exists.
+    Caller is responsible for committing the session.
+    """
+    batch_id = uuid.uuid4()
+    placeholder_ids: list[uuid.UUID] = []
+
+    for attachment in payload.attachments:
+        order_id = uuid.uuid4()
+        session.add(
+            PurchaseOrder(
+                id=order_id,
+                status=OrderStatus.PROCESSING.value,
+                original_filename=attachment.filename,
+                sender_email=payload.from_address,
+                batch_id=batch_id,
+            )
+        )
+        placeholder_ids.append(order_id)
+
+    return batch_id, placeholder_ids
+
+
+async def process_placeholders(
+    payload: WebhookEmailPayload,
+    batch_id: uuid.UUID,
+    placeholder_ids: list[uuid.UUID],
+    session: AsyncSession,
+) -> None:
+    """Run the full pipeline against pre-created placeholder orders:
+    classify -> process each attachment -> send summary email.
+
+    If classification says the email is not a PO, all placeholders are deleted.
+    """
+    log = logger.bind(batch_id=str(batch_id))
+
+    # Step 1: Classification (once per email)
+    step_start = time.monotonic()
+    log.bind(step="classification").info("Classifying email")
+    is_po = await classify_email(
+        subject=payload.subject,
+        body=payload.body,
+        filenames=[a.filename for a in payload.attachments],
+    )
+
+    if not is_po:
+        log.info("Email classified as non-PO — removing placeholders")
+        for order_id in placeholder_ids:
+            order = await session.get(PurchaseOrder, order_id)
+            if order is not None:
+                await session.delete(order)
+        await session.commit()
+        return
+
+    classify_duration_ms = int((time.monotonic() - step_start) * 1000)
+
+    # Step 2: Process each attachment, updating its placeholder
+    orders: list[PurchaseOrder] = []
+    for attachment, order_id in zip(payload.attachments, placeholder_ids, strict=True):
+        try:
+            order = await _process_attachment(
+                attachment=attachment,
+                payload=payload,
+                order_id=order_id,
+                batch_id=batch_id,
+                classify_duration_ms=classify_duration_ms,
+                session=session,
+            )
+            orders.append(order)
+        except Exception:
+            log.exception("Failed to process attachment {}", attachment.filename)
+
+    if not orders:
+        log.warning("No attachments processed successfully")
+        await session.commit()
+        return
+
+    await session.commit()
+
+    # Step 3: Send one summary email for all POs in this batch
+    try:
+        await email_service.send_batch_summary(orders, session)
+        await session.commit()
+    except Exception:
+        log.warning("Failed to send batch summary email — continuing")
+
+    log.info(
+        "Batch complete — {} PO(s): {}",
+        len(orders),
+        ", ".join(f"{o.po_number or o.original_filename}={o.status}" for o in orders),
+    )
+
+
+async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> uuid.UUID:
+    """Convenience one-shot: create placeholders and process them in the same
+    session. Does not commit between phases — used by tests and by the Gmail
+    poller (which opens a dedicated session per email).
+    """
+    batch_id, placeholder_ids = await create_placeholder_orders(payload, session)
+    await process_placeholders(payload, batch_id, placeholder_ids, session)
+    return batch_id
+
+
+async def _process_attachment(
+    attachment: AttachmentPayload,
+    payload: WebhookEmailPayload,
+    order_id: uuid.UUID,
+    batch_id: uuid.UUID,
+    classify_duration_ms: int,
+    session: AsyncSession,
+) -> PurchaseOrder:
+    """Process a single attachment through extract -> validate -> RAG -> route and
+    update its pre-created placeholder PurchaseOrder in place.
+    """
+    log = logger.bind(correlation_id=str(order_id), batch_id=str(batch_id))
     pending_logs: list[dict] = []
 
+    # Record classification step (shared across batch)
+    pending_logs.append({
+        "order_id": order_id,
+        "step": "classification",
+        "status": ProcessingStepStatus.COMPLETED.value,
+        "duration_ms": classify_duration_ms,
+        "metadata_": {"is_po": True},
+    })
+
+    order = await session.get(PurchaseOrder, order_id)
+    if order is None:
+        msg = f"Placeholder order {order_id} not found"
+        raise RuntimeError(msg)
+
     try:
-        # Step 1: Classification
+        # File processing
         step_start = time.monotonic()
-        log.bind(step="classification").info("Classifying email")
-        is_po = await classify_email(
-            subject=payload.subject,
-            body=payload.body,
-            filenames=[a.filename for a in payload.attachments],
-        )
-        pending_logs.append(_make_log(tracking_id, "classification", step_start, {"is_po": is_po}))
-
-        if not is_po:
-            log.info("Email classified as non-PO, skipping")
-            return tracking_id
-
-        # Step 2: File processing
-        step_start = time.monotonic()
-        attachment = payload.attachments[0]
-        file_data = base64.b64decode(attachment.data)
+        file_data = base64.urlsafe_b64decode(attachment.data + "==")
         file_type = detect_file_type(attachment.filename, attachment.content_type, file_data)
 
         content = None
         images = None
         if file_type == "csv":
             content = await extract_text_from_csv(file_data)
+        elif file_type == "xlsx":
+            content = await extract_text_from_xlsx(file_data)
         elif file_type == "pdf_scanned":
             images = await extract_images_from_pdf(file_data)
-        else:  # pdf_digital or image
-            if file_type == "image":
-                images = [file_data]
-            else:
-                content = await extract_text_from_pdf(file_data)
+        elif file_type == "image":
+            images = [file_data]
+        else:
+            content = await extract_text_from_pdf(file_data)
         pending_logs.append(
-            _make_log(tracking_id, "file_processing", step_start, {"file_type": file_type})
+            _make_log(order_id, "file_processing", step_start, {"file_type": file_type})
         )
 
-        # Step 3: Extraction
+        # Extraction
         step_start = time.monotonic()
         extraction = await extract_po_data(content=content, images=images)
-        pending_logs.append(_make_log(tracking_id, "extraction", step_start))
+        pending_logs.append(_make_log(order_id, "extraction", step_start))
 
-        # Step 4: Deterministic validation (against database)
+        # Deterministic validation
         step_start = time.monotonic()
         validation_results = [
             await validate_vendor(extraction, session),
@@ -101,17 +216,17 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
         for vr in validation_results:
             all_tags.extend(vr.tags)
         pending_logs.append(
-            _make_log(tracking_id, "validation", step_start, {"tag_count": len(all_tags)})
+            _make_log(order_id, "validation", step_start, {"tag_count": len(all_tags)})
         )
 
-        # Step 4b: RAG validation (reviews deterministic results against knowledge base)
+        # RAG validation
         step_start = time.monotonic()
         all_details = {vr.check_type.value: vr.details for vr in validation_results}
         rag_result = await rag_validate(extraction, all_tags, all_details)
         final_tags = apply_rag_adjustments(all_tags, rag_result)
         pending_logs.append(
             _make_log(
-                tracking_id,
+                order_id,
                 "rag_validation",
                 step_start,
                 {
@@ -123,39 +238,37 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
             )
         )
 
-        # Step 5: Routing (uses final tags after RAG adjustments)
+        # Routing
         step_start = time.monotonic()
         status = route_order(final_tags)
         pending_logs.append(
-            _make_log(tracking_id, "routing", step_start, {"status": status.value})
+            _make_log(order_id, "routing", step_start, {"status": status.value})
         )
 
-        # Step 6: Persist — order first (FK parent), then children
-        order = PurchaseOrder(
-            id=tracking_id,
-            po_number=extraction.po_number,
-            po_date=extraction.po_date,
-            vendor_name=extraction.vendor.name,
-            vendor_contact=extraction.vendor.contact,
-            requester_name=extraction.requester.name if extraction.requester else None,
-            requester_department=extraction.requester.department if extraction.requester else None,
-            line_items={"items": [item.model_dump() for item in extraction.line_items]},
-            total_amount=extraction.total_amount,
-            currency=extraction.currency,
-            delivery_date=extraction.delivery_date,
-            payment_terms=extraction.payment_terms,
-            status=status.value,
-            original_filename=attachment.filename,
-            sender_email=payload.from_address,
+        # Update placeholder with extracted data + final status
+        order.po_number = extraction.po_number
+        order.po_date = extraction.po_date
+        order.vendor_name = extraction.vendor.name
+        order.vendor_contact = extraction.vendor.contact
+        order.requester_name = extraction.requester.name if extraction.requester else None
+        order.requester_department = (
+            extraction.requester.department if extraction.requester else None
         )
+        order.line_items = {"items": [item.model_dump() for item in extraction.line_items]}
+        order.total_amount = extraction.total_amount
+        order.currency = extraction.currency
+        order.delivery_date = extraction.delivery_date
+        order.payment_terms = extraction.payment_terms
+        order.status = status.value
+        order.updated_at = utc_now()
         session.add(order)
         await session.flush()
 
-        # Now safe to insert FK children
+        # Persist children
         for vr in validation_results:
             session.add(
                 ValidationCheck(
-                    order_id=tracking_id,
+                    order_id=order_id,
                     check_type=vr.check_type.value,
                     result=vr.result.value,
                     details=vr.details,
@@ -164,7 +277,7 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
 
         session.add(
             ValidationCheck(
-                order_id=tracking_id,
+                order_id=order_id,
                 check_type=ValidationCheckType.RAG.value,
                 result="PASS" if not final_tags else "WARNING",
                 details=rag_result.model_dump(),
@@ -174,7 +287,7 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
         for tag_result in final_tags:
             session.add(
                 IssueTag(
-                    order_id=tracking_id,
+                    order_id=order_id,
                     tag=tag_result.tag.value,
                     severity=tag_result.severity.value,
                     description=tag_result.description,
@@ -187,7 +300,7 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
         # Record inbound email
         session.add(
             EmailLog(
-                order_id=tracking_id,
+                order_id=order_id,
                 direction=EmailDirection.INBOUND.value,
                 email_type=EmailType.PO_SUBMISSION.value,
                 sender=payload.from_address,
@@ -195,30 +308,19 @@ async def process_email(payload: WebhookEmailPayload, session: AsyncSession) -> 
                 subject=payload.subject,
                 sent_at=datetime.fromisoformat(
                     payload.received_at.replace("Z", "+00:00")
-                ).replace(tzinfo=None),
+                ),
             )
         )
 
-        await session.commit()
-
-        # Step 7: Send email response (best-effort)
-        try:
-            if status == OrderStatus.APPROVED:
-                await email_service.send_confirmation(order, session)
-            else:
-                await email_service.send_acknowledgment(order, session)
-            await session.commit()
-        except Exception:
-            log.warning("Failed to send email response — continuing")
-
-        log.info("Pipeline complete — status={}", status.value)
-        return tracking_id
+        log.info("Attachment {} — status={}", attachment.filename, status.value)
+        return order
 
     except Exception:
-        log.exception("Pipeline failed")
-        order = PurchaseOrder(id=tracking_id, status=OrderStatus.FAILED.value)
+        log.exception("Pipeline failed for {}", attachment.filename)
+        order.status = OrderStatus.FAILED.value
+        order.updated_at = utc_now()
         session.add(order)
-        await session.commit()
+        await session.flush()
         raise
 
 

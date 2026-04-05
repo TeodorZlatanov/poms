@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Index
+from sqlalchemy import Column, DateTime, Index
 from sqlmodel import Field, SQLModel
+
+from core.time import utc_now
 
 
 class EmailLog(SQLModel, table=True):
@@ -16,4 +18,7 @@ class EmailLog(SQLModel, table=True):
     sender: str = Field(max_length=255)
     recipient: str = Field(max_length=255)
     subject: str | None = Field(default=None, max_length=500)
-    sent_at: datetime = Field(default_factory=datetime.utcnow)
+    sent_at: datetime = Field(
+        default_factory=utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
