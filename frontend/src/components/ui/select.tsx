@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { CaretDown, Check } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
 import { cn } from "@/utils/cn";
 
 export interface SelectOption<T extends string | number = string> {
@@ -149,7 +149,7 @@ export function Select<T extends string | number = string>({
                       {option.label}
                     </span>
                     {isSelected && (
-                      <Check
+                      <CheckIcon
                         size={16}
                         weight="bold"
                         className="flex-shrink-0 text-primary"
@@ -186,7 +186,7 @@ export function Select<T extends string | number = string>({
           {selectedOption?.icon}
           {selectedOption?.label ?? placeholder}
         </span>
-        <CaretDown
+        <CaretDownIcon
           size={14}
           weight="bold"
           className={cn(

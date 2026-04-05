@@ -1,7 +1,7 @@
 import {
-  EnvelopeSimple,
-  PaperPlaneTilt,
-  Tray,
+  EnvelopeSimpleIcon,
+  PaperPlaneTiltIcon,
+  TrayIcon,
 } from "@phosphor-icons/react";
 import type { EmailRecord } from "@/types";
 import { cn } from "@/utils/cn";
@@ -17,7 +17,7 @@ export function EmailHistory({ emails }: { emails: EmailRecord[] }) {
   if (emails.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-6 text-muted">
-        <EnvelopeSimple size={28} weight="duotone" className="opacity-50" />
+        <EnvelopeSimpleIcon size={28} weight="duotone" className="opacity-50" />
         <p className="text-sm">No emails.</p>
       </div>
     );
@@ -27,7 +27,7 @@ export function EmailHistory({ emails }: { emails: EmailRecord[] }) {
     <div className="space-y-2">
       {emails.map((email, i) => {
         const isInbound = email.direction === "INBOUND";
-        const DirectionIcon = isInbound ? Tray : PaperPlaneTilt;
+        const DirectionIcon = isInbound ? TrayIcon : PaperPlaneTiltIcon;
 
         return (
           <div

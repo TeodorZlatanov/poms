@@ -1,4 +1,4 @@
-import { ChartBar, ChartPie, Tag, CalendarBlank } from "@phosphor-icons/react";
+import { ChartBarIcon, ChartPieIcon, TagIcon, CalendarBlankIcon } from "@phosphor-icons/react";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { StatsCards } from "@/components/analytics/statsCards";
 import { StatusChart } from "@/components/analytics/statusChart";
@@ -13,7 +13,7 @@ export function AnalyticsPage() {
       <div className="p-6 lg:p-8">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <ChartBar size={20} weight="duotone" className="text-primary" />
+            <ChartBarIcon size={20} weight="duotone" className="text-primary" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             Analytics
@@ -34,7 +34,7 @@ export function AnalyticsPage() {
       <div className="p-6 lg:p-8">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-            <ChartBar size={20} weight="duotone" className="text-primary" />
+            <ChartBarIcon size={20} weight="duotone" className="text-primary" />
           </div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             Analytics
@@ -51,7 +51,7 @@ export function AnalyticsPage() {
     <div className="p-6 lg:p-8">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-          <ChartBar size={20} weight="duotone" className="text-primary" />
+          <ChartBarIcon size={20} weight="duotone" className="text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
@@ -70,7 +70,7 @@ export function AnalyticsPage() {
       <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
         <section className="rounded-xl border border-border bg-surface shadow-sm">
           <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-            <ChartPie size={16} weight="duotone" className="text-muted" />
+            <ChartPieIcon size={16} weight="duotone" className="text-muted" />
             <h2 className="text-sm font-semibold text-foreground">
               Status Distribution
             </h2>
@@ -82,7 +82,7 @@ export function AnalyticsPage() {
 
         <section className="rounded-xl border border-border bg-surface shadow-sm">
           <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-            <Tag size={16} weight="duotone" className="text-muted" />
+            <TagIcon size={16} weight="duotone" className="text-muted" />
             <h2 className="text-sm font-semibold text-foreground">
               Common Issue Tags
             </h2>
@@ -95,7 +95,7 @@ export function AnalyticsPage() {
 
       <section className="mt-5 rounded-xl border border-border bg-surface shadow-sm">
         <div className="flex items-center gap-2 border-b border-border px-5 py-3">
-          <CalendarBlank size={16} weight="duotone" className="text-muted" />
+          <CalendarBlankIcon size={16} weight="duotone" className="text-muted" />
           <h2 className="text-sm font-semibold text-foreground">
             Volume by Day
           </h2>

@@ -1,4 +1,4 @@
-import { Package } from "@phosphor-icons/react";
+import { PackageIcon } from "@phosphor-icons/react";
 import { ThemeSwitcher } from "@/components/ui/themeSwitcher";
 
 export function Header() {
@@ -7,7 +7,7 @@ export function Header() {
       <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Package size={18} weight="fill" className="text-primary-foreground" />
+            <PackageIcon size={18} weight="fill" className="text-primary-foreground" />
           </div>
           <div>
             <h1 className="text-sm font-semibold tracking-tight text-foreground">POMS</h1>

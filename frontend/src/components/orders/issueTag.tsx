@@ -1,4 +1,4 @@
-import { WarningOctagon, WarningCircle } from "@phosphor-icons/react";
+import { WarningOctagonIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { cn } from "@/utils/cn";
 
 function formatTagName(tag: string): string {
@@ -18,7 +18,7 @@ export function IssueTagPill({
   description?: string | null;
 }) {
   const isHard = severity === "HARD";
-  const Icon = isHard ? WarningOctagon : WarningCircle;
+  const Icon = isHard ? WarningOctagonIcon : WarningCircleIcon;
 
   return (
     <span

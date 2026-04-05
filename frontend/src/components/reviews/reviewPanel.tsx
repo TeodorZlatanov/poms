@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, XCircle } from "@phosphor-icons/react";
+import { CheckCircleIcon, XCircleIcon } from "@phosphor-icons/react";
 import { useSubmitReview } from "@/hooks/useReview";
 import type { OrderStatus } from "@/types";
 import { cn } from "@/utils/cn";
@@ -54,7 +54,7 @@ export function ReviewPanel({
             "disabled:pointer-events-none disabled:opacity-40"
           )}
         >
-          <CheckCircle size={16} weight="fill" />
+          <CheckCircleIcon size={16} weight="fill" />
           {mutation.isPending ? "Submitting..." : "Approve"}
         </button>
         <button
@@ -75,14 +75,14 @@ export function ReviewPanel({
             "disabled:pointer-events-none disabled:opacity-40"
           )}
         >
-          <XCircle size={16} weight="fill" />
+          <XCircleIcon size={16} weight="fill" />
           {mutation.isPending ? "Submitting..." : "Reject"}
         </button>
       </div>
 
       {mutation.isSuccess && (
         <p className="mt-2 flex items-center gap-1 text-sm text-green-600">
-          <CheckCircle size={14} weight="fill" />
+          <CheckCircleIcon size={14} weight="fill" />
           Review submitted.
         </p>
       )}

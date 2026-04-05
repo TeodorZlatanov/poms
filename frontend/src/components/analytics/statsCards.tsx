@@ -1,8 +1,8 @@
 import {
-  Package,
-  TrendUp,
-  Timer,
-  Clock,
+  PackageIcon,
+  TrendUpIcon,
+  TimerIcon,
+  ClockIcon,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import type { AnalyticsData } from "@/types";
@@ -52,25 +52,25 @@ export function StatsCards({ data }: { data: AnalyticsData }) {
       <Card
         title="Total Processed"
         value={data.total_processed}
-        icon={Package}
+        icon={PackageIcon}
         iconClassName="bg-blue-100 text-blue-600"
       />
       <Card
         title="Approval Rate"
         value={`${(data.approval_rate * 100).toFixed(1)}%`}
-        icon={TrendUp}
+        icon={TrendUpIcon}
         iconClassName="bg-green-100 text-green-600"
       />
       <Card
         title="Avg Processing"
         value={formatDuration(data.avg_processing_time_ms)}
-        icon={Timer}
+        icon={TimerIcon}
         iconClassName="bg-purple-100 text-purple-600"
       />
       <Card
         title="Pending Review"
         value={data.by_status["PENDING_REVIEW"] ?? 0}
-        icon={Clock}
+        icon={ClockIcon}
         iconClassName="bg-amber-100 text-amber-600"
       />
     </div>

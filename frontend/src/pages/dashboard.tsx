@@ -1,15 +1,15 @@
 import { useState } from "react";
 import {
-  MagnifyingGlass,
-  Funnel,
-  CaretLeft,
-  CaretRight,
-  ClipboardText,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Spinner,
-  Warning,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  ClipboardTextIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  SpinnerIcon,
+  WarningIcon,
 } from "@phosphor-icons/react";
 import { useOrders } from "@/hooks/useOrders";
 import { OrderTable } from "@/components/orders/orderTable";
@@ -20,11 +20,11 @@ import type { OrderStatus } from "@/types";
 
 const statusOptions: SelectOption<OrderStatus | "">[] = [
   { value: "", label: "All Statuses" },
-  { value: "APPROVED", label: "Approved", icon: <CheckCircle size={16} weight="fill" className="text-green-600" /> },
-  { value: "PENDING_REVIEW", label: "Pending Review", icon: <Clock size={16} weight="fill" className="text-amber-600" /> },
-  { value: "REJECTED", label: "Rejected", icon: <XCircle size={16} weight="fill" className="text-red-600" /> },
-  { value: "PROCESSING", label: "Processing", icon: <Spinner size={16} weight="fill" className="text-blue-600" /> },
-  { value: "FAILED", label: "Failed", icon: <Warning size={16} weight="fill" className="text-gray-500" /> },
+  { value: "APPROVED", label: "Approved", icon: <CheckCircleIcon size={16} weight="fill" className="text-green-600" /> },
+  { value: "PENDING_REVIEW", label: "Pending Review", icon: <ClockIcon size={16} weight="fill" className="text-amber-600" /> },
+  { value: "REJECTED", label: "Rejected", icon: <XCircleIcon size={16} weight="fill" className="text-red-600" /> },
+  { value: "PROCESSING", label: "Processing", icon: <SpinnerIcon size={16} weight="fill" className="text-blue-600" /> },
+  { value: "FAILED", label: "Failed", icon: <WarningIcon size={16} weight="fill" className="text-gray-500" /> },
 ];
 
 export function DashboardPage() {
@@ -53,7 +53,7 @@ export function DashboardPage() {
     <div className="p-6 lg:p-8">
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-          <ClipboardText size={20} weight="duotone" className="text-primary" />
+          <ClipboardTextIcon size={20} weight="duotone" className="text-primary" />
         </div>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-foreground">
@@ -75,12 +75,12 @@ export function DashboardPage() {
           options={statusOptions}
           placeholder="All Statuses"
           icon={
-            <Funnel size={16} weight="duotone" className="text-muted" />
+            <FunnelIcon size={16} weight="duotone" className="text-muted" />
           }
         />
 
         <div className="relative">
-          <MagnifyingGlass
+          <MagnifyingGlassIcon
             size={16}
             weight="duotone"
             className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
@@ -117,7 +117,7 @@ export function DashboardPage() {
           </p>
         ) : data && data.items.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-16">
-            <ClipboardText
+            <ClipboardTextIcon
               size={40}
               weight="duotone"
               className="text-muted opacity-40"
@@ -151,7 +151,7 @@ export function DashboardPage() {
                 "disabled:pointer-events-none disabled:opacity-40"
               )}
             >
-              <CaretLeft size={14} />
+              <CaretLeftIcon size={14} />
               Previous
             </button>
             <button
@@ -166,7 +166,7 @@ export function DashboardPage() {
               )}
             >
               Next
-              <CaretRight size={14} />
+              <CaretRightIcon size={14} />
             </button>
           </div>
         </div>

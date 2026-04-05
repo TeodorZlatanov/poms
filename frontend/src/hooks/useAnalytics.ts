@@ -5,5 +5,6 @@ export function useAnalytics() {
   return useQuery({
     queryKey: ["analytics"],
     queryFn: fetchAnalytics,
+    refetchInterval: 10_000,
   });
 }

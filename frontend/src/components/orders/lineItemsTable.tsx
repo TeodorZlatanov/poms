@@ -1,4 +1,4 @@
-import { Package } from "@phosphor-icons/react";
+import { PackageIcon } from "@phosphor-icons/react";
 import type { LineItem } from "@/types";
 
 function formatPrice(
@@ -22,7 +22,7 @@ export function LineItemsTable({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 py-8 text-muted">
-        <Package size={32} weight="duotone" className="opacity-50" />
+        <PackageIcon size={32} weight="duotone" className="opacity-50" />
         <p className="text-sm">No line items.</p>
       </div>
     );

@@ -1,6 +1,5 @@
 import { apiFetch } from "./client";
 import type { OrderListResponse, OrderDetail, OrderFilters } from "@/types";
-import { getMockOrderList, mockOrderDetails } from "@/mocks/data";
 
 export async function fetchOrders(
   filters: OrderFilters = {},
@@ -12,19 +11,9 @@ export async function fetchOrders(
   if (filters.page_size) params.set("page_size", String(filters.page_size));
   const qs = params.toString();
 
-  try {
-    return await apiFetch<OrderListResponse>(`/orders/${qs ? `?${qs}` : ""}`);
-  } catch {
-    return getMockOrderList(filters);
-  }
+  return apiFetch<OrderListResponse>(`/orders/${qs ? `?${qs}` : ""}`);
 }
 
 export async function fetchOrder(id: string): Promise<OrderDetail> {
-  try {
-    return await apiFetch<OrderDetail>(`/orders/${id}`);
-  } catch {
-    const mock = mockOrderDetails[id];
-    if (mock) return mock;
-    throw new Error("Order not found");
-  }
+  return apiFetch<OrderDetail>(`/orders/${id}`);
 }

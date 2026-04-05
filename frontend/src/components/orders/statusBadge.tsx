@@ -1,9 +1,9 @@
 import {
-  CheckCircle,
-  Clock,
-  XCircle,
-  Spinner,
-  Warning,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  SpinnerIcon,
+  WarningIcon,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import type { OrderStatus } from "@/types";
@@ -16,27 +16,27 @@ const statusConfig: Record<
   APPROVED: {
     label: "Approved",
     className: "bg-green-100 text-green-800",
-    icon: CheckCircle,
+    icon: CheckCircleIcon,
   },
   PENDING_REVIEW: {
     label: "Pending Review",
     className: "bg-amber-100 text-amber-800",
-    icon: Clock,
+    icon: ClockIcon,
   },
   REJECTED: {
     label: "Rejected",
     className: "bg-red-100 text-red-800",
-    icon: XCircle,
+    icon: XCircleIcon,
   },
   PROCESSING: {
     label: "Processing",
     className: "bg-blue-100 text-blue-800",
-    icon: Spinner,
+    icon: SpinnerIcon,
   },
   FAILED: {
     label: "Failed",
     className: "bg-gray-100 text-gray-700",
-    icon: Warning,
+    icon: WarningIcon,
   },
 };
 
@@ -44,7 +44,7 @@ export function StatusBadge({ status }: { status: OrderStatus }) {
   const config = statusConfig[status] ?? {
     label: status,
     className: "bg-gray-100 text-gray-700",
-    icon: Warning,
+    icon: WarningIcon,
   };
 
   const StatusIcon = config.icon;

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Sun, Moon, Monitor, Check } from "@phosphor-icons/react";
+import { SunIcon, MoonIcon, MonitorIcon, CheckIcon } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import { useTheme } from "@/components/ui/themeProvider";
 import { cn } from "@/utils/cn";
@@ -8,9 +8,9 @@ import { cn } from "@/utils/cn";
 type ThemeMode = "light" | "dark" | "system";
 
 const options: { value: ThemeMode; label: string; icon: Icon }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Monitor },
+  { value: "light", label: "Light", icon: SunIcon },
+  { value: "dark", label: "Dark", icon: MoonIcon },
+  { value: "system", label: "System", icon: MonitorIcon },
 ];
 
 export function ThemeSwitcher() {
@@ -24,7 +24,7 @@ export function ThemeSwitcher() {
   } | null>(null);
 
   const ActiveIcon =
-    options.find((o) => o.value === mode)?.icon ?? Monitor;
+    options.find((o) => o.value === mode)?.icon ?? MonitorIcon;
 
   useEffect(() => {
     if (!isOpen || !buttonRef.current) return;
@@ -98,7 +98,7 @@ export function ThemeSwitcher() {
                       {option.label}
                     </span>
                     {isSelected && (
-                      <Check
+                      <CheckIcon
                         size={16}
                         weight="bold"
                         className="flex-shrink-0 text-primary"

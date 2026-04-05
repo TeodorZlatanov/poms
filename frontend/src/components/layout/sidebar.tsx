@@ -1,11 +1,11 @@
 import { Link, useLocation } from "react-router";
-import { ClipboardText, ChartBar } from "@phosphor-icons/react";
+import { ClipboardTextIcon, ChartBarIcon } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import { cn } from "@/utils/cn";
 
 const links: { to: string; label: string; icon: Icon }[] = [
-  { to: "/", label: "Orders", icon: ClipboardText },
-  { to: "/analytics", label: "Analytics", icon: ChartBar },
+  { to: "/", label: "Orders", icon: ClipboardTextIcon },
+  { to: "/analytics", label: "Analytics", icon: ChartBarIcon },
 ];
 
 export function Sidebar() {
