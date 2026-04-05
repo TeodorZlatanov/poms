@@ -1,4 +1,4 @@
-from services.files import detect_file_type, extract_text_from_csv
+from services.files import detect_file_type, extract_text_from_csv, extract_text_from_xlsx
 
 
 class TestDetectFileType:
@@ -9,6 +9,19 @@ class TestDetectFileType:
     def test_csv_by_extension(self):
         result = detect_file_type("data.csv", "application/octet-stream", b"col1,col2\nval1,val2")
         assert result == "csv"
+
+    def test_xlsx_by_content_type(self):
+        ct = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        result = detect_file_type("data.xlsx", ct, b"")
+        assert result == "xlsx"
+
+    def test_xlsx_by_extension(self):
+        result = detect_file_type("data.xlsx", "application/octet-stream", b"")
+        assert result == "xlsx"
+
+    def test_xls_by_extension(self):
+        result = detect_file_type("data.xls", "application/octet-stream", b"")
+        assert result == "xlsx"
 
     def test_image_by_content_type(self):
         result = detect_file_type("scan.png", "image/png", b"\x89PNG")
@@ -32,3 +45,24 @@ class TestExtractTextFromCsv:
         result = await extract_text_from_csv(csv_data)
         assert "Alice" in result
         assert "Bob" in result
+
+
+class TestExtractTextFromXlsx:
+    async def test_basic_xlsx(self):
+        import io
+
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "PO Data"
+        ws.append(["Item", "Quantity", "Price"])
+        ws.append(["Sensor", 50, 12.50])
+        ws.append(["Belt", 100, 17.50])
+        buf = io.BytesIO()
+        wb.save(buf)
+
+        result = await extract_text_from_xlsx(buf.getvalue())
+        assert "PO Data" in result
+        assert "Sensor" in result
+        assert "Belt" in result

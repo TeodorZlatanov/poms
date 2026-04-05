@@ -1,6 +1,9 @@
 # Knowledge Base
 
-This directory contains the RAG (Retrieval-Augmented Generation) documents used by the POMS validation pipeline. These files are embedded into LanceDB at startup and queried during purchase order validation.
+This directory contains the source data for the POMS validation pipeline. The files serve two purposes:
+
+1. **Database seeding** - `vendors.json` and `catalog.json` are loaded into PostgreSQL reference tables via `scripts/seed_reference_data.py` for deterministic validation.
+2. **RAG ingestion** - `generate_pdfs.py` produces rich PDFs in `pdfs/` that are embedded into LanceDB via `scripts/ingest_knowledge.py` for AI-powered validation.
 
 ## Files
 
@@ -35,6 +38,26 @@ Corporate procurement policy document (12 sections) covering:
 
 Used for: policy compliance checks, spending limit validation, payment terms validation, completeness checks.
 
-## How it's used
+### pdfs/
 
-At backend startup, these files are loaded and embedded into a LanceDB vector store. During PO validation, the agent queries the knowledge base using hybrid search (vector similarity + full-text keyword matching) to validate extracted PO data against the company's internal records and policies.
+Generated PDFs containing enriched knowledge base content (vendor profiles with framework agreements, Q4 surcharges, grace periods, etc.). These go beyond the raw JSON/MD data to include nuanced business context that the RAG agent uses to make smarter validation decisions.
+
+Regenerate with: `cd knowledge && python generate_pdfs.py`
+
+## How it works
+
+### Step 1: Seed reference data (deterministic validation)
+
+```bash
+cd backend && uv run python -m scripts.seed_reference_data
+```
+
+Loads `vendors.json` and `catalog.json` into PostgreSQL tables (`approved_vendors`, `product_catalog`, `procurement_policies`). These are used for exact vendor matching, price comparison, and spending limit checks.
+
+### Step 2: Ingest PDFs into LanceDB (RAG validation)
+
+```bash
+cd backend && uv run python -m scripts.ingest_knowledge
+```
+
+Processes PDFs in `pdfs/` through PyMuPDF, splits by markdown headers, embeds with Azure OpenAI, and stores in LanceDB with hybrid search (vector + full-text). At startup, the backend connects to the existing LanceDB table - it does not re-embed.

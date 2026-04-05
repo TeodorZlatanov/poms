@@ -15,13 +15,21 @@ from agent.exceptions import FileProcessingError
 
 
 def detect_file_type(filename: str, content_type: str, data: bytes) -> str:
-    """Detect file type. Returns 'pdf_digital', 'pdf_scanned', 'csv', or 'image'."""
+    """Detect file type. Returns 'pdf_digital', 'pdf_scanned', 'csv', 'xlsx', or 'image'."""
     lower_name = filename.lower()
     lower_ct = content_type.lower()
 
     # CSV detection
     if lower_ct == "text/csv" or lower_name.endswith(".csv"):
         return "csv"
+
+    # XLSX detection
+    xlsx_types = {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel",
+    }
+    if lower_ct in xlsx_types or lower_name.endswith((".xlsx", ".xls")):
+        return "xlsx"
 
     # Image detection
     if lower_ct.startswith("image/") or lower_name.endswith((".png", ".jpg", ".jpeg", ".tiff")):
@@ -77,5 +85,19 @@ async def extract_text_from_csv(data: bytes) -> str:
     def _parse() -> str:
         df = pd.read_csv(io.BytesIO(data))
         return df.to_string(index=False)
+
+    return await asyncio.to_thread(_parse)
+
+
+async def extract_text_from_xlsx(data: bytes) -> str:
+    """Parse XLSX data and return a readable string representation of all sheets."""
+
+    def _parse() -> str:
+        sheets = pd.read_excel(io.BytesIO(data), sheet_name=None, engine="openpyxl")
+        parts = []
+        for name, df in sheets.items():
+            parts.append(f"Sheet: {name}")
+            parts.append(df.to_string(index=False))
+        return "\n\n".join(parts)
 
     return await asyncio.to_thread(_parse)
