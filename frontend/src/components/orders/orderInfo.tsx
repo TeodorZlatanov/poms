@@ -1,15 +1,14 @@
 import {
-  Hash,
-  Calendar,
-  Buildings,
-  User,
-  CurrencyDollar,
-  Truck,
-  CreditCard,
-  File,
-  Envelope,
-  ShieldCheck,
-  Clock,
+  HashIcon,
+  CalendarIcon,
+  BuildingsIcon,
+  UserIcon,
+  CurrencyDollarIcon,
+  TruckIcon,
+  CreditCardIcon,
+  FileIcon,
+  EnvelopeIcon,
+  ClockIcon,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 import type { OrderDetail } from "@/types";
@@ -52,41 +51,32 @@ function Field({
 export function OrderInfo({ order }: { order: OrderDetail }) {
   return (
     <dl className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Field icon={Hash} label="PO Number" value={order.po_number} />
-      <Field icon={Calendar} label="PO Date" value={order.po_date} />
+      <Field icon={HashIcon} label="PO Number" value={order.po_number} />
+      <Field icon={CalendarIcon} label="PO Date" value={order.po_date} />
       <Field
         label="Status"
         value={<StatusBadge status={order.status} />}
       />
-      <Field icon={Buildings} label="Vendor Name" value={order.vendor_name} />
-      <Field icon={Envelope} label="Vendor Contact" value={order.vendor_contact} />
-      <Field icon={User} label="Requester" value={order.requester_name} />
-      <Field icon={Buildings} label="Department" value={order.requester_department} />
+      <Field icon={BuildingsIcon} label="Vendor Name" value={order.vendor_name} />
+      <Field icon={EnvelopeIcon} label="Vendor Contact" value={order.vendor_contact} />
+      <Field icon={UserIcon} label="Requester" value={order.requester_name} />
+      <Field icon={BuildingsIcon} label="Department" value={order.requester_department} />
       <Field
-        icon={CurrencyDollar}
+        icon={CurrencyDollarIcon}
         label="Total Amount"
         value={formatAmount(order.total_amount, order.currency)}
       />
-      <Field icon={Truck} label="Delivery Date" value={order.delivery_date} />
-      <Field icon={CreditCard} label="Payment Terms" value={order.payment_terms} />
-      <Field icon={File} label="Original File" value={order.original_filename} />
-      <Field icon={Envelope} label="Sender Email" value={order.sender_email} />
+      <Field icon={TruckIcon} label="Delivery Date" value={order.delivery_date} />
+      <Field icon={CreditCardIcon} label="Payment Terms" value={order.payment_terms} />
+      <Field icon={FileIcon} label="Original File" value={order.original_filename} />
+      <Field icon={EnvelopeIcon} label="Sender Email" value={order.sender_email} />
       <Field
-        icon={ShieldCheck}
-        label="Confidence"
-        value={
-          order.confidence_score != null
-            ? `${(order.confidence_score * 100).toFixed(1)}%`
-            : null
-        }
-      />
-      <Field
-        icon={Clock}
+        icon={ClockIcon}
         label="Created"
         value={new Date(order.created_at).toLocaleString()}
       />
       <Field
-        icon={Clock}
+        icon={ClockIcon}
         label="Updated"
         value={new Date(order.updated_at).toLocaleString()}
       />

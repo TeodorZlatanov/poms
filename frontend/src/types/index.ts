@@ -17,14 +17,12 @@ export interface PurchaseOrder {
   created_at: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
+export interface OrderListResponse {
+  items: PurchaseOrder[];
   total: number;
   page: number;
   page_size: number;
 }
-
-export type OrderListResponse = PaginatedResponse<PurchaseOrder>;
 
 // Detail view types
 export interface ValidationCheck {
@@ -46,12 +44,6 @@ export interface EmailRecord {
   recipient: string;
   subject: string | null;
   sent_at: string;
-}
-
-export interface ProcessingLog {
-  step: string;
-  status: string;
-  duration_ms: number | null;
 }
 
 export interface ReviewDecision {
@@ -81,7 +73,6 @@ export interface OrderDetail {
   delivery_date: string | null;
   payment_terms: string | null;
   status: OrderStatus;
-  confidence_score: number | null;
   original_filename: string | null;
   sender_email: string | null;
   created_at: string;
@@ -89,7 +80,6 @@ export interface OrderDetail {
   validation_results: ValidationCheck[];
   issue_tags: IssueTag[];
   emails: EmailRecord[];
-  processing_logs: ProcessingLog[];
   review: ReviewDecision | null;
 }
 
