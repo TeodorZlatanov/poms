@@ -3,7 +3,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from agent.exceptions import ClassificationError
-from agent.llm import get_small_model
+from agent.llm import get_model
 from agent.prompts import CLASSIFICATION_SYSTEM, CLASSIFICATION_USER
 
 
@@ -20,7 +20,7 @@ async def classify_email(
     """Returns True if the email contains a purchase order."""
     try:
         agent = Agent(
-            model=get_small_model(),
+            model=get_model(),
             instructions=[CLASSIFICATION_SYSTEM],
             output_schema=ClassificationResult,
             telemetry=False,

@@ -14,9 +14,8 @@ class Settings(BaseSettings):
     # Azure OpenAI — Completion
     azure_openai_api_key: str = ""
     azure_openai_endpoint: str = ""
-    azure_openai_api_version: str = "2024-12-01-preview"
+    azure_openai_api_version: str = ""
     azure_openai_deployment: str = ""
-    azure_openai_deployment_small: str = ""
 
     # Azure OpenAI — Embeddings
     azure_openai_embed_api_key: str = ""
@@ -27,7 +26,7 @@ class Settings(BaseSettings):
     # Gmail
     gmail_credentials_path: str = "./credentials.json"
     gmail_token_path: str = "./token.json"
-    agent_email: str = "po.processing.demo@gmail.com"
+    agent_email: str = ""
 
     # Knowledge base
     lancedb_path: str = "./data/lancedb"
