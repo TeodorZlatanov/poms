@@ -1,10 +1,10 @@
 # POMS — Purchase Order Management System
 
-AI-powered purchase order processing pipeline. Receives PO emails, extracts structured data via LLM, validates against a RAG knowledge base (vendors, pricing, policies), and routes based on confidence. Auto-approves clean POs, flags uncertain ones for human review, never auto-rejects.
+AI-powered purchase order processing pipeline. Receives PO emails, extracts structured data via LLM, validates against a RAG knowledge base (vendors, pricing, policies), and routes based on the resulting issue tags. Auto-approves clean POs, flags soft issues for human review, never auto-rejects.
 
 ## Tech Stack
 
-**Backend:** Python 3.13+ · FastAPI (async only) · Agno (agent framework) · Anthropic Claude (LLM) · LanceDB (vector store, hybrid search) · SQLModel + asyncpg (PostgreSQL ORM) · Alembic (migrations, auto-run on startup) · Gmail API (OAuth2) · PyMuPDF · pandas · Loguru
+**Backend:** Python 3.13+ · FastAPI (async only) · Agno (agent framework) · Azure OpenAI (LLM + embeddings) · LanceDB (vector store, hybrid search) · SQLModel + asyncpg (PostgreSQL ORM) · Alembic (migrations, auto-run on startup) · Gmail API (OAuth2) · PyMuPDF · pandas · Loguru
 **Frontend:** React 19 · TypeScript (strict) · Vite · TanStack Query · Tailwind CSS 4
 **Infrastructure:** PostgreSQL 18 · Docker Compose · uv (Python) · pnpm (frontend) · Ruff (lint/format)
 
@@ -25,7 +25,7 @@ cd frontend && pnpm build                        # Production build
 cd frontend && pnpm lint                         # Lint
 
 # Infrastructure
-docker compose up -d                             # Start PostgreSQL + pgAdmin
+docker compose up -d                             # Start PostgreSQL
 docker compose down                              # Stop services
 
 # CLI (run.sh wraps common commands)
@@ -53,8 +53,8 @@ poms/
 │   ├── pages/               # Route pages (dashboard, order detail, analytics)
 │   └── types/               # Shared TypeScript interfaces
 ├── knowledge/               # RAG documents: vendors.json, catalog.json, policies.md
-├── samples/                 # Mock PO files for demo (3 test cases)
-└── docker-compose.yml       # PostgreSQL 18 + pgAdmin
+├── samples/                 # Mock PO files for demo (9 samples: 3 scenarios × PDF/XLSX/PNG)
+└── docker-compose.yml       # PostgreSQL 18
 ```
 
 ## Architecture
@@ -86,12 +86,12 @@ GET  /api/analytics              # Dashboard analytics (volume, rates, common ta
 
 6 tables, all with UUID PKs and created_at/updated_at timestamps:
 
-- `purchase_orders` — PO data + status + line_items (JSONB)
-- `validation_results` — Per-check results (vendor/price/policy/completeness)
+- `purchase_orders` — PO data + status + line_items (JSONB) + batch_id
+- `validation_checks` — Per-check results (vendor/price/policy/completeness/rag)
 - `issue_tags` — Tag name + severity (soft/hard)
 - `review_decisions` — Reviewer decision + comment
 - `processing_logs` — Step name + duration_ms + metadata (JSONB)
-- `emails` — Direction + type + sender/recipient
+- `email_logs` — Direction + type + sender/recipient
 
 Enums stored as VARCHAR, validated in Python. Migrations auto-run on startup. Never write manual SQL for schema changes.
 
@@ -153,7 +153,7 @@ uv run pytest -k "test_routing"                  # Pattern match
 - pytest + pytest-asyncio (`asyncio_mode = "auto"`)
 - httpx `AsyncClient` with `ASGITransport` for API tests
 - Separate `poms_test` database, per-test transaction rollback
-- Mock all LLM calls — tests never hit Anthropic API
+- Mock all LLM calls — tests never hit Azure OpenAI API
 - Test routing logic, tag generation, completeness, endpoints, file parsing, edge cases
 - Do NOT test: LLM output quality, Gmail connectivity, frontend, migration correctness
 
