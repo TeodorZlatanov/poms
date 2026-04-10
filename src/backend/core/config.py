@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=("../.env", ".env"),
+        env_file=("../../.env", ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Knowledge base
     lancedb_path: str = "./data/lancedb"
-    knowledge_pdf_dir: str = "../knowledge/pdfs"
+    knowledge_pdf_dir: str = "../../assets/knowledge/pdfs"
 
     # Application
     poll_interval_seconds: int = 30

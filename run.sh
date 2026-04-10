@@ -16,6 +16,8 @@ error() {
 }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BACKEND_DIR="$SCRIPT_DIR/src/backend"
+FRONTEND_DIR="$SCRIPT_DIR/src/frontend"
 
 require_docker() {
   if ! command -v docker &>/dev/null; then
@@ -65,7 +67,7 @@ down-v)
 backend-setup)
   require_uv
   info "Setting up backend..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv sync
   info "Backend dependencies installed."
   ;;
@@ -73,9 +75,9 @@ dev)
   require_uv
   require_pnpm
   info "Starting backend (port 8000) and frontend (port 3000)..."
-  cd "$SCRIPT_DIR/backend" && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000 &
+  cd "$BACKEND_DIR" && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000 &
   BACKEND_PID=$!
-  cd "$SCRIPT_DIR/frontend" && pnpm dev &
+  cd "$FRONTEND_DIR" && pnpm dev &
   FRONTEND_PID=$!
   trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null" EXIT INT TERM
   info "Backend: http://localhost:8000  |  Frontend: http://localhost:3000"
@@ -84,25 +86,25 @@ dev)
 backend-dev)
   require_uv
   info "Starting backend dev server..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
   ;;
 lint)
   require_uv
   info "Linting backend..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run ruff check .
   ;;
 format)
   require_uv
   info "Formatting backend..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run ruff format .
   ;;
 test)
   require_uv
   info "Running backend tests..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run pytest "${@:2}"
   ;;
 
@@ -110,37 +112,37 @@ test)
 db-migrate)
   require_uv
   info "Creating new migration..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run alembic revision --autogenerate -m "${2:?Migration message required}"
   ;;
 db-upgrade)
   require_uv
   info "Running migrations..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run alembic upgrade head
   ;;
 db-downgrade)
   require_uv
   info "Rolling back last migration..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run alembic downgrade -1
   ;;
 db-history)
   require_uv
   info "Migration history:"
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run alembic history --verbose
   ;;
 kb-seed)
   require_uv
   info "Seeding reference data (vendors, catalog, policies) into PostgreSQL..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run python -m scripts.seed_reference_data
   ;;
 kb-ingest)
   require_uv
   info "Embedding knowledge base PDFs into LanceDB vector store..."
-  cd "$SCRIPT_DIR/backend"
+  cd "$BACKEND_DIR"
   uv run python -m scripts.ingest_knowledge "${@:2}"
   ;;
 kb-init)
@@ -154,32 +156,32 @@ kb-init)
 frontend-setup)
   require_pnpm
   info "Setting up frontend..."
-  cd "$SCRIPT_DIR/frontend"
+  cd "$FRONTEND_DIR"
   pnpm install
   info "Frontend dependencies installed."
   ;;
 frontend-dev)
   require_pnpm
   info "Starting frontend dev server..."
-  cd "$SCRIPT_DIR/frontend"
+  cd "$FRONTEND_DIR"
   pnpm dev
   ;;
 frontend-build)
   require_pnpm
   info "Building frontend..."
-  cd "$SCRIPT_DIR/frontend"
+  cd "$FRONTEND_DIR"
   pnpm build
   ;;
 frontend-lint)
   require_pnpm
   info "Linting frontend..."
-  cd "$SCRIPT_DIR/frontend"
+  cd "$FRONTEND_DIR"
   pnpm lint
   ;;
 frontend-check)
   require_pnpm
   info "Running frontend type check, lint, and build..."
-  cd "$SCRIPT_DIR/frontend"
+  cd "$FRONTEND_DIR"
   npx tsc --noEmit && pnpm lint && pnpm build
   info "Frontend checks passed."
   ;;

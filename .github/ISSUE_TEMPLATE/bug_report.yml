@@ -1,0 +1,100 @@
+name: Bug Report
+description: Report a defect or unexpected behavior in POMS
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much as you can so we can reproduce and fix it quickly.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A clear and concise description of the bug.
+      placeholder: When ingesting a PO with multiple attachments, only the first is processed...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part of the stack is affected?
+      options:
+        - Backend — API / routes
+        - Backend — Agent pipeline (classify / extract / validate / route)
+        - Backend — Services (email, poller, knowledge, files)
+        - Backend — Database / migrations
+        - Frontend — Dashboard / orders
+        - Frontend — Reviews
+        - Frontend — Analytics
+        - Infrastructure / Docker / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Exact steps — include sample payloads, file names, or API calls.
+      placeholder: |
+        1. POST /api/webhook/email with payload X
+        2. Observe order in dashboard
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include stack traces or error messages if available.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste Loguru output or browser console errors. Include correlation IDs if possible.
+      render: shell
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit / branch
+      description: Output of `git rev-parse --short HEAD` or the branch you are on.
+      placeholder: main @ abc1234
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local dev (docker compose)
+        - Staging
+        - Production
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I have searched existing issues and this is not a duplicate
+          required: true
+        - label: I can reproduce this reliably
+          required: false

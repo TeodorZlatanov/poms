@@ -4,7 +4,7 @@ These PDFs contain nuanced business context that goes beyond what deterministic
 DB checks can handle — policy exceptions, volume discounts, vendor relationships,
 framework agreements, grace periods, etc. This is where RAG adds real value.
 
-Usage: cd knowledge && python generate_pdfs.py
+Usage: cd assets/knowledge && python generate_pdfs.py
 """
 
 import pymupdf

@@ -164,13 +164,15 @@ async def _process_attachment(
     pending_logs: list[dict] = []
 
     # Record classification step (shared across batch)
-    pending_logs.append({
-        "order_id": order_id,
-        "step": "classification",
-        "status": ProcessingStepStatus.COMPLETED.value,
-        "duration_ms": classify_duration_ms,
-        "metadata_": {"is_po": True},
-    })
+    pending_logs.append(
+        {
+            "order_id": order_id,
+            "step": "classification",
+            "status": ProcessingStepStatus.COMPLETED.value,
+            "duration_ms": classify_duration_ms,
+            "metadata_": {"is_po": True},
+        }
+    )
 
     order = await session.get(PurchaseOrder, order_id)
     if order is None:
@@ -241,9 +243,7 @@ async def _process_attachment(
         # Routing
         step_start = time.monotonic()
         status = route_order(final_tags)
-        pending_logs.append(
-            _make_log(order_id, "routing", step_start, {"status": status.value})
-        )
+        pending_logs.append(_make_log(order_id, "routing", step_start, {"status": status.value}))
 
         # Update placeholder with extracted data + final status
         order.po_number = extraction.po_number
@@ -306,9 +306,7 @@ async def _process_attachment(
                 sender=payload.from_address,
                 recipient=settings.agent_email,
                 subject=payload.subject,
-                sent_at=datetime.fromisoformat(
-                    payload.received_at.replace("Z", "+00:00")
-                ),
+                sent_at=datetime.fromisoformat(payload.received_at.replace("Z", "+00:00")),
             )
         )
 
