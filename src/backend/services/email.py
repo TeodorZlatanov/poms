@@ -208,14 +208,11 @@ class EmailService:
             lines.append("All purchase orders have been approved. No action is required.")
         elif review:
             lines.append(
-                f"{review} order(s) require review. "
-                "You will be notified when a decision is made."
+                f"{review} order(s) require review. You will be notified when a decision is made."
             )
 
         body = "\n".join(lines)
-        email_type = (
-            EmailType.CONFIRMATION.value if not review else EmailType.ACKNOWLEDGMENT.value
-        )
+        email_type = EmailType.CONFIRMATION.value if not review else EmailType.ACKNOWLEDGMENT.value
 
         # Send once, log against all orders
         gmail_msg_id = await self.send_email(

@@ -10,9 +10,7 @@ from services.email import EmailService
 def _email_logs_from_adds(session: MagicMock) -> list[EmailLog]:
     """Extract EmailLog objects from session.add() calls."""
     return [
-        call.args[0]
-        for call in session.add.call_args_list
-        if isinstance(call.args[0], EmailLog)
+        call.args[0] for call in session.add.call_args_list if isinstance(call.args[0], EmailLog)
     ]
 
 
