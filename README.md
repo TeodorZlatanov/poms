@@ -4,20 +4,22 @@ AI-powered purchase order processing pipeline. Receives PO emails, extracts stru
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Why RAG Matters](#why-rag-matters)
-- [Tech Stack](#tech-stack)
-- [Prerequisites](#prerequisites)
-- [Project Setup](#project-setup)
-- [Running the Application](#running-the-application)
-- [Sample PO Files](#sample-po-files)
-- [End-to-End Testing](#end-to-end-testing)
-- [API Reference](#api-reference)
-- [Project Structure](#project-structure)
-- [Testing](#testing)
-- [CLI Reference (run.sh)](#cli-reference-runsh)
-- [Disclaimer](#disclaimer)
+- **[Overview](#overview)**
+- **[Architecture](#architecture)**
+- **[Why RAG Matters](#why-rag-matters)**
+- **[Tech Stack](#tech-stack)**
+- **[Prerequisites](#prerequisites)**
+- **[Project Setup](#project-setup)**
+- **[Running the Application](#running-the-application)**
+- **[Sample PO Files](#sample-po-files)**
+- **[End-to-End Testing](#end-to-end-testing)**
+- **[API Reference](#api-reference)**
+- **[Project Structure](#project-structure)**
+- **[Testing](#testing)**
+- **[CLI Reference (run.sh)](#cli-reference-runsh)**
+- **[CI/CD](#cicd)**
+- **[Deployment (Azure)](#deployment-azure)**
+- **[Disclaimer](#disclaimer)**
 
 ## Overview
 
@@ -329,6 +331,225 @@ poms/
 | `./run.sh kb-seed` | Seed reference data (vendors, catalog, policies) |
 | `./run.sh kb-ingest` | Embed knowledge PDFs into LanceDB |
 | `./run.sh kb-init` | Run seed + ingest together |
+
+## CI/CD
+
+POMS uses GitHub Actions with a strict split between **Continuous Integration** (runs on every push and PR to `main`) and **Continuous Deployment** (runs only on version tags). Security scanning runs alongside CI and on a weekly schedule.
+
+### Pipeline overview
+
+```
+               Pull request / push to main                      Tag  v*
+                             │                                      │
+           ┌─────────────────┼──────────────────┐                   │
+           ▼                 ▼                  ▼                   ▼
+    ┌────────────┐    ┌────────────┐    ┌────────────┐    ┌──────────────────┐
+    │backend.yml │    │frontend.yml│    │ codeql.yml │    │deploy-backend.yml│
+    │            │    │            │    │            │    │                  │
+    │ • ruff     │    │ • eslint   │    │ • python   │    │ • docker buildx  │
+    │ • pytest   │    │ • tsc+vite │    │ • ts / js  │    │ • push to ACR    │
+    │   +cov     │    │            │    │ + weekly   │    │ • containerapp   │
+    │            │    │            │    │   cron     │    │   update         │
+    │ path:      │    │ path:      │    │            │    │ • /health probe  │
+    │ src/backend│    │src/frontend│    │            │    └──────────────────┘
+    └────────────┘    └────────────┘    └────────────┘    ┌──────────────────┐
+                                                          │deploy-frontend   │
+                                                          │   .yml           │
+                                                          │ • pnpm build     │
+                                                          │ • SWA deploy     │
+                                                          └──────────────────┘
+```
+
+### Continuous Integration
+
+**`backend.yml`** runs two jobs, both path-filtered to `src/backend/**`:
+
+- **Lint & Format** — `uv sync --frozen`, then `ruff check .` and `ruff format --check .`. Zero tolerance for style drift.
+- **Tests** — spins up a PostgreSQL 18 service container, creates the `poms_test` database, and runs `pytest --cov=.` against it. Real Postgres, not mocks, because the migrations, async session handling, and JSONB columns need a real database. LLM calls are mocked; tests never hit Azure OpenAI.
+
+**`frontend.yml`** also runs two jobs, path-filtered to `src/frontend/**`:
+
+- **Lint** — `pnpm install --frozen-lockfile` + `pnpm lint` (ESLint v10).
+- **Typecheck & Build** — `pnpm build` = `tsc -b && vite build`. Any type error or build failure blocks the merge.
+
+**`codeql.yml`** runs GitHub's default CodeQL Advanced scan for Python and TypeScript/JavaScript (`build-mode: none`) on every push and PR to `main`, plus a weekly cron at `39 1 * * 1`. Results surface in the repo's Security tab.
+
+### Continuous Deployment
+
+Deploys are **tag-driven** — pushes to `main` only run CI, they do **not** deploy. This is deliberate:
+
+- `main` is always deployable but not always deployed — half-done feature merges don't ship.
+- Git tags give a human-readable release history and a natural rollback target.
+- Rollbacks are a one-liner: repoint the Container App at a previous tag's image.
+- `workflow_dispatch` still allows manual releases for hotfixes.
+
+```
+    ┌───────────┐
+    │ Developer │
+    └─────┬─────┘
+          │ git tag v0.1.0 && git push --tags
+          ▼
+    ┌──────────────────────────────────┐
+    │       GitHub Actions             │
+    │  ─────────────────────────────   │
+    │  .github/workflows/              │
+    │    deploy-backend.yml            │
+    │    deploy-frontend.yml           │
+    └────────────────┬─────────────────┘
+                     │ OIDC federated login
+                     │ (Entra ID app · no long-lived secrets)
+                     ▼
+    ╔═══════════════════════════════════════════════════════╗
+    ║           Azure  ·  rg-poms-demo                      ║
+    ║                                                       ║
+    ║   ┌──────────────────┐      docker push               ║
+    ║   │ Container        │◀─────────── deploy-backend     ║
+    ║   │ Registry (Basic) │                                ║
+    ║   └────────┬─────────┘                                ║
+    ║            │ image pull                               ║
+    ║            │ (AcrPull via user-assigned identity)     ║
+    ║            ▼                                          ║
+    ║   ┌──────────────────┐                                ║
+    ║   │ Container App    │   az containerapp update       ║
+    ║   │ (new revision)   │◀──────────── deploy-backend    ║
+    ║   └──────────────────┘                                ║
+    ║                                                       ║
+    ║   ┌──────────────────┐   SWA deploy token             ║
+    ║   │ Static Web App   │◀──────────── deploy-frontend   ║
+    ║   │ (Free tier)      │                                ║
+    ║   └──────────────────┘                                ║
+    ║                                                       ║
+    ╚═══════════════════════════════════════════════════════╝
+```
+
+**`deploy-backend.yml`** logs in via OIDC, builds the backend image with a GitHub Actions layer cache (`cache-from/to: type=gha`), pushes it to ACR tagged with both the version and `:latest`, runs `az containerapp update --image …` to roll a new revision, then curls `/health` on the public FQDN with 6 retries and fails the run if the new revision isn't serving within ~60 seconds.
+
+**`deploy-frontend.yml`** sets up pnpm 9 and Node 22 with lockfile cache, runs `pnpm build` with `VITE_API_BASE_URL=https://<container-app-fqdn>` baked in at build time, and hands `dist/` to `Azure/static-web-apps-deploy@v1` using the SWA deploy token (`skip_app_build: true` because we already built).
+
+#### OIDC authentication to Azure
+
+Neither deploy workflow stores a service principal secret. `src/infra/bootstrap.sh` creates an Entra ID app registration with two **federated credentials** scoped to this repo:
+
+- `repo:<owner>/<name>:ref:refs/heads/main`
+- `repo:<owner>/<name>:environment:production`
+
+At deploy time, `azure/login@v2` exchanges the GitHub-issued OIDC token for a short-lived Azure access token. Nothing long-lived lives in GitHub.
+
+### Releasing
+
+After the first-time bootstrap has run, cutting a release is three commands:
+
+```bash
+git checkout main && git pull
+git tag v0.1.0
+git push origin v0.1.0
+# → deploy-backend.yml and deploy-frontend.yml run in parallel
+```
+
+Both workflows also support manual invocation via `workflow_dispatch` from the Actions tab.
+
+To roll back, point the Container App at a previous tag's image:
+
+```bash
+az containerapp update \
+  --name ca-poms-backend \
+  --resource-group rg-poms-demo \
+  --image <registry>.azurecr.io/poms-backend:<previous-version>
+```
+
+### Required GitHub Actions secrets
+
+All seeded automatically by `src/infra/bootstrap.sh`:
+
+| Secret | Used by | What it is |
+|---|---|---|
+| `AZURE_CLIENT_ID` | both deploy workflows | Entra ID app (client) ID |
+| `AZURE_TENANT_ID` | both deploy workflows | Entra ID tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | both deploy workflows | Target subscription |
+| `AZURE_RESOURCE_GROUP` | deploy-backend | Resource group name |
+| `AZURE_CONTAINER_REGISTRY` | deploy-backend | ACR login server |
+| `AZURE_CONTAINER_APP` | deploy-backend | Container App name |
+| `AZURE_CONTAINER_APP_FQDN` | deploy-frontend | Baked into `VITE_API_BASE_URL` |
+| `AZURE_STATIC_WEB_APP_TOKEN` | deploy-frontend | SWA deploy API token |
+
+## Deployment (Azure)
+
+POMS ships with Infrastructure-as-Code (Bicep) that targets **Azure Container Apps** for the backend and **Azure Static Web Apps** for the frontend. All infrastructure files live in `src/infra/`. The release workflows that build and ship images are described in the [CI/CD](#cicd) section above.
+
+### Runtime architecture
+
+```
+                             ┌───────────┐
+                             │   Users   │
+                             └─────┬─────┘
+                                   │ HTTPS
+                                   ▼
+         ┌──────────────────────────────────────────────┐
+         │  Azure Static Web App  (Free tier)           │
+         │  React + TypeScript + Vite                   │
+         │  swa-poms-demo                               │
+         └──────────────────┬───────────────────────────┘
+                            │ fetch  /api/*   (CORS)
+                            ▼
+         ┌──────────────────────────────────────────────┐
+         │  Container Apps Environment                  │
+         │  cae-poms-demo                               │
+         │                                              │
+         │  ┌────────────────────────────────────────┐  │
+         │  │  ca-poms-backend                       │  │
+         │  │  FastAPI  +  Gmail poller              │  │
+         │  │  0.5 vCPU · 1 GiB · min=1 replica      │  │
+         │  │                                        │  │
+         │  │  volume: /app/data                     │  │
+         │  └──┬───────┬──────────┬──────────┬──────┘  │
+         └─────┼───────┼──────────┼──────────┼─────────┘
+               │       │          │          │
+               │       │          │          └──▶ Log Analytics
+               │       │          │                (container stdout)
+               │       │          │
+               │       │          └──▶ Azure Files share
+               │       │                (LanceDB vectors)
+               │       │
+               │       └──▶ Azure OpenAI
+               │            • gpt-4o-mini       (completion)
+               │            • text-embedding-3-large (embeddings)
+               │
+               └──▶ PostgreSQL Flexible Server  (Burstable B1ms)
+                    database: poms
+```
+
+### What gets provisioned
+
+A single Bicep template at `src/infra/main.bicep` declares every Azure resource:
+
+| Resource | Purpose |
+|---|---|
+| Log Analytics workspace | Observability sink for Container Apps |
+| Azure Container Registry (Basic) | Hosts the backend image |
+| User-assigned managed identity | Grants `AcrPull` on the registry to the Container App |
+| Storage account + Azure Files share | Persists the LanceDB vector store across restarts |
+| Container Apps managed environment | Runtime with the file share mounted |
+| Container App (`ca-poms-backend`) | FastAPI + Gmail poller, single container, `min=1` replica |
+| PostgreSQL Flexible Server (B1ms) | Application database |
+| Azure OpenAI account | `gpt-4o-mini` + `text-embedding-3-large` deployments |
+| Static Web App (Free) | React frontend |
+
+### First-time deploy
+
+```bash
+./src/infra/bootstrap.sh
+```
+
+The script:
+
+1. Registers the required resource providers.
+2. Creates the resource group (`rg-poms-demo` in North Europe by default).
+3. Deploys `main.bicep` with a hello-world placeholder image so the Container App can be created before CI has ever built the real image.
+4. Configures GitHub OIDC — app registration + two federated credentials (`refs/heads/main` and `environment:production`).
+5. Assigns `Contributor` on the resource group and `AcrPush` on the ACR to the service principal.
+6. Fetches the Static Web App deploy token and seeds **8 GitHub Actions secrets** used by the deploy workflows.
+
+See [`src/infra/README.md`](src/infra/README.md) for prerequisites, env var overrides, how to seed the RAG vector store inside the Container App, and teardown commands. The release flow (tag-driven, how to roll back) lives in the [CI/CD](#cicd) section above.
 
 ## DISCLAIMER
 
