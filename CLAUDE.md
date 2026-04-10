@@ -12,17 +12,17 @@ AI-powered purchase order processing pipeline. Receives PO emails, extracts stru
 
 ```bash
 # Backend
-cd backend && uv run fastapi dev main.py        # Dev server with hot reload
-cd backend && uv run ruff check .                # Lint
-cd backend && uv run ruff format .               # Format
-cd backend && uv run pytest                      # Run tests
-cd backend && uv run pytest -v --cov=backend     # Tests with coverage
-cd backend && uv run alembic revision --autogenerate -m "description"  # New migration
+cd src/backend && uv run fastapi dev main.py        # Dev server with hot reload
+cd src/backend && uv run ruff check .                # Lint
+cd src/backend && uv run ruff format .               # Format
+cd src/backend && uv run pytest                      # Run tests
+cd src/backend && uv run pytest -v --cov=backend     # Tests with coverage
+cd src/backend && uv run alembic revision --autogenerate -m "description"  # New migration
 
 # Frontend
-cd frontend && pnpm dev                          # Dev server
-cd frontend && pnpm build                        # Production build
-cd frontend && pnpm lint                         # Lint
+cd src/frontend && pnpm dev                          # Dev server
+cd src/frontend && pnpm build                        # Production build
+cd src/frontend && pnpm lint                         # Lint
 
 # Infrastructure
 docker compose up -d                             # Start PostgreSQL
@@ -36,24 +36,26 @@ docker compose down                              # Stop services
 
 ```
 poms/
-├── backend/
-│   ├── api/routes/          # HTTP endpoints (orders, reviews, webhook, analytics)
-│   ├── agent/               # AI pipeline (classifier, extractor, validator, router, prompts)
-│   ├── core/                # Config (BaseSettings), database engine, Loguru setup
-│   ├── models/              # SQLModel database models + enums
-│   ├── schemas/             # Pydantic request/response schemas (separate from DB models)
-│   ├── services/            # Business logic (email, pipeline, poller, files, knowledge)
-│   ├── migrations/          # Alembic migrations (auto-run on startup via lifespan)
-│   ├── tests/               # pytest tests mirroring backend structure
-│   └── main.py              # FastAPI app entry point
-├── frontend/src/
-│   ├── api/                 # API client (fetch wrapper + types)
-│   ├── components/          # UI components (orders/, reviews/, analytics/, layout/)
-│   ├── hooks/               # TanStack Query hooks (useOrders, useReviewAction, etc.)
-│   ├── pages/               # Route pages (dashboard, order detail, analytics)
-│   └── types/               # Shared TypeScript interfaces
-├── knowledge/               # RAG documents: vendors.json, catalog.json, policies.md
-├── samples/                 # Mock PO files for demo (9 samples: 3 scenarios × PDF/XLSX/PNG)
+├── src/
+│   ├── backend/
+│   │   ├── api/routes/          # HTTP endpoints (orders, reviews, webhook, analytics)
+│   │   ├── agent/               # AI pipeline (classifier, extractor, validator, router, prompts)
+│   │   ├── core/                # Config (BaseSettings), database engine, Loguru setup
+│   │   ├── models/              # SQLModel database models + enums
+│   │   ├── schemas/             # Pydantic request/response schemas (separate from DB models)
+│   │   ├── services/            # Business logic (email, pipeline, poller, files, knowledge)
+│   │   ├── migrations/          # Alembic migrations (auto-run on startup via lifespan)
+│   │   ├── tests/               # pytest tests mirroring backend structure
+│   │   └── main.py              # FastAPI app entry point
+│   └── frontend/src/
+│       ├── api/                 # API client (fetch wrapper + types)
+│       ├── components/          # UI components (orders/, reviews/, analytics/, layout/)
+│       ├── hooks/               # TanStack Query hooks (useOrders, useReviewAction, etc.)
+│       ├── pages/               # Route pages (dashboard, order detail, analytics)
+│       └── types/               # Shared TypeScript interfaces
+├── assets/
+│   ├── knowledge/           # RAG documents: vendors.json, catalog.json, policies.md
+│   └── samples/             # Mock PO files for demo (9 samples: 3 scenarios × PDF/XLSX/PNG)
 └── docker-compose.yml       # PostgreSQL 18
 ```
 
@@ -170,5 +172,5 @@ uv run pytest -k "test_routing"                  # Pattern match
 
 - Full PRD: `.claude/PRD.md`
 - Task planning: `PROJECT-TASK.md`
-- Knowledge base docs: `knowledge/`
-- Sample PO files: `samples/`
+- Knowledge base docs: `assets/knowledge/`
+- Sample PO files: `assets/samples/`

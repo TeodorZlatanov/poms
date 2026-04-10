@@ -41,7 +41,9 @@ def upgrade() -> None:
         sa.Column("original_filename", sqlmodel.sql.sqltypes.AutoString(length=500), nullable=True),
         sa.Column("sender_email", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
         sa.Column("batch_id", sa.Uuid(), nullable=True),
-        sa.Column("batch_email_message_id", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True),
+        sa.Column(
+            "batch_email_message_id", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=True
+        ),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint("id"),
