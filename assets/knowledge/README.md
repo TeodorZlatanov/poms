@@ -42,7 +42,7 @@ Used for: policy compliance checks, spending limit validation, payment terms val
 
 Generated PDFs containing enriched knowledge base content (vendor profiles with framework agreements, Q4 surcharges, grace periods, etc.). These go beyond the raw JSON/MD data to include nuanced business context that the RAG agent uses to make smarter validation decisions.
 
-Regenerate with: `cd knowledge && python generate_pdfs.py`
+Regenerate with: `cd assets/knowledge && python generate_pdfs.py`
 
 ## How it works
 

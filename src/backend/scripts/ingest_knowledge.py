@@ -1,12 +1,12 @@
 """Ingest knowledge PDFs into the LanceDB vector database.
 
-Processes all PDFs in the knowledge/pdfs/ directory:
+Processes all PDFs in the assets/knowledge/pdfs/ directory:
   PDF → pymupdf4llm (markdown with layout detection) → MarkdownHeaderTextSplitter
   → merge sub-section chunks → embed with Azure OpenAI → insert into LanceDB
 
 Usage:
     cd src/backend && uv run python -m scripts.ingest_knowledge
-    cd src/backend && uv run python -m scripts.ingest_knowledge --pdf-dir ../../knowledge/pdfs
+    cd src/backend && uv run python -m scripts.ingest_knowledge --pdf-dir ../../assets/knowledge/pdfs
     cd src/backend && uv run python -m scripts.ingest_knowledge --drop  # recreate from scratch
 """
 

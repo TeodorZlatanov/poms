@@ -203,7 +203,7 @@ This starts both the backend (port 8000) and frontend (port 3000) in the same te
 
 ## Sample PO Files
 
-Nine sample POs are included in `samples/`, covering three file formats and three validation scenarios:
+Nine sample POs are included in `assets/samples/`, covering three file formats and three validation scenarios:
 
 | Sample | Format | Vendor | Expected Route | Key Issues |
 |--------|--------|--------|----------------|------------|
@@ -243,7 +243,7 @@ cd src/backend
 uv run python -m scripts.test_pipeline
 
 # Test a specific file
-uv run python -m scripts.test_pipeline --file ../../samples/po_clean.xlsx
+uv run python -m scripts.test_pipeline --file ../../assets/samples/po_clean.xlsx
 ```
 
 ## API Reference
@@ -280,13 +280,14 @@ poms/
 │       ├── hooks/               # TanStack Query hooks (live polling: 2–3s)
 │       ├── pages/               # Route pages (dashboard, order detail, analytics)
 │       └── types/               # TypeScript interfaces
-├── knowledge/               # RAG source data + generated PDFs
-│   ├── vendors.json         # Approved vendor registry (10 vendors)
-│   ├── catalog.json         # Product catalog (15 SKUs)
-│   ├── policies.md          # Corporate procurement policy
-│   ├── pdfs/                # Generated PDFs for RAG ingestion
-│   └── generate_pdfs.py     # PDF generator script
-├── samples/                 # 9 sample PO files (PDF, XLSX, PNG)
+├── assets/
+│   ├── knowledge/           # RAG source data + generated PDFs
+│   │   ├── vendors.json     # Approved vendor registry (10 vendors)
+│   │   ├── catalog.json     # Product catalog (15 SKUs)
+│   │   ├── policies.md      # Corporate procurement policy
+│   │   ├── pdfs/            # Generated PDFs for RAG ingestion
+│   │   └── generate_pdfs.py # PDF generator script
+│   └── samples/             # 9 sample PO files (PDF, XLSX, PNG)
 ├── docker-compose.yml       # PostgreSQL 18
 └── run.sh                   # CLI wrapper for all dev commands
 ```

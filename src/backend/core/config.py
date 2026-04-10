@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Knowledge base
     lancedb_path: str = "./data/lancedb"
-    knowledge_pdf_dir: str = "../../knowledge/pdfs"
+    knowledge_pdf_dir: str = "../../assets/knowledge/pdfs"
 
     # Application
     poll_interval_seconds: int = 30

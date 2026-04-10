@@ -53,8 +53,9 @@ poms/
 │       ├── hooks/               # TanStack Query hooks (useOrders, useReviewAction, etc.)
 │       ├── pages/               # Route pages (dashboard, order detail, analytics)
 │       └── types/               # Shared TypeScript interfaces
-├── knowledge/               # RAG documents: vendors.json, catalog.json, policies.md
-├── samples/                 # Mock PO files for demo (9 samples: 3 scenarios × PDF/XLSX/PNG)
+├── assets/
+│   ├── knowledge/           # RAG documents: vendors.json, catalog.json, policies.md
+│   └── samples/             # Mock PO files for demo (9 samples: 3 scenarios × PDF/XLSX/PNG)
 └── docker-compose.yml       # PostgreSQL 18
 ```
 
@@ -171,5 +172,5 @@ uv run pytest -k "test_routing"                  # Pattern match
 
 - Full PRD: `.claude/PRD.md`
 - Task planning: `PROJECT-TASK.md`
-- Knowledge base docs: `knowledge/`
-- Sample PO files: `samples/`
+- Knowledge base docs: `assets/knowledge/`
+- Sample PO files: `assets/samples/`

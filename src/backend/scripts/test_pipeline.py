@@ -1,11 +1,11 @@
 """End-to-end pipeline test with sample PO files (no email integration).
 
-Reads sample PDFs from samples/, builds fake email payloads, and runs them
+Reads sample PDFs from assets/samples/, builds fake email payloads, and runs them
 through the full pipeline: classify → extract → validate (DB) → RAG validate → route.
 
 Usage:
     cd src/backend && uv run python -m scripts.test_pipeline
-    cd src/backend && uv run python -m scripts.test_pipeline --file ../../samples/po_clean.pdf
+    cd src/backend && uv run python -m scripts.test_pipeline --file ../../assets/samples/po_clean.pdf
     cd src/backend && uv run python -m scripts.test_pipeline --skip-classify
 """
 
@@ -29,7 +29,7 @@ from models import (
 )
 from services.knowledge import knowledge_service
 
-SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
+SAMPLES_DIR = Path(__file__).resolve().parents[3] / "assets" / "samples"
 
 # Sample PO metadata for building fake email payloads
 SAMPLE_POS = {

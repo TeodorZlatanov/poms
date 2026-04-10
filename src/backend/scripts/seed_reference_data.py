@@ -1,4 +1,4 @@
-"""Seed reference data tables from knowledge/ JSON and policy files.
+"""Seed reference data tables from assets/knowledge/ JSON and policy files.
 
 Usage: cd src/backend && uv run python -m scripts.seed_reference_data
 """
@@ -13,7 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from core.database import async_session_factory
 from models.reference import ApprovedVendor, ProcurementPolicy, ProductCatalog
 
-KNOWLEDGE_DIR = Path(__file__).resolve().parents[3] / "knowledge"
+KNOWLEDGE_DIR = Path(__file__).resolve().parents[3] / "assets" / "knowledge"
 
 
 async def seed_vendors(session: AsyncSession) -> int:

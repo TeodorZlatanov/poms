@@ -38,7 +38,7 @@ from models import (
 from services.email import email_service
 from services.knowledge import knowledge_service
 
-SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
+SAMPLES_DIR = Path(__file__).resolve().parents[3] / "assets" / "samples"
 
 SAMPLE_POS = {
     # PDF samples
