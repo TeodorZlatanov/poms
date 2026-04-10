@@ -166,8 +166,8 @@ If you want email integration (Gmail polling + sending):
 1. Create a Google Cloud project and enable the Gmail API
 2. Configure the OAuth consent screen (add your email as a test user)
 3. Create OAuth credentials (Desktop application type)
-4. Place the downloaded `credentials.json` in `backend/`
-5. Run the auth flow: `cd backend && uv run python -c "import asyncio; from services.email import email_service; asyncio.run(email_service.authenticate())"`
+4. Place the downloaded `credentials.json` in `src/backend/`
+5. Run the auth flow: `cd src/backend && uv run python -c "import asyncio; from services.email import email_service; asyncio.run(email_service.authenticate())"`
 6. Authorize in the browser — `token.json` is saved automatically
 
 ## Running the Application
@@ -222,7 +222,7 @@ Nine sample POs are included in `samples/`, covering three file formats and thre
 ### Full E2E test (send + poll + pipeline + verify)
 
 ```bash
-cd backend
+cd src/backend
 
 # Test one sample end-to-end
 uv run python -m scripts.test_e2e_email --po clean-pdf
@@ -237,13 +237,13 @@ uv run python -m scripts.test_e2e_email --po all
 ### Pipeline test (no email, direct file processing)
 
 ```bash
-cd backend
+cd src/backend
 
 # Test all sample files through the pipeline
 uv run python -m scripts.test_pipeline
 
 # Test a specific file
-uv run python -m scripts.test_pipeline --file ../samples/po_clean.xlsx
+uv run python -m scripts.test_pipeline --file ../../samples/po_clean.xlsx
 ```
 
 ## API Reference
@@ -263,22 +263,23 @@ Full interactive docs available at http://localhost:8000/docs when the backend i
 
 ```
 poms/
-├── backend/
-│   ├── api/routes/          # HTTP endpoints (orders, reviews, webhook, analytics)
-│   ├── agent/               # AI pipeline (classifier, extractor, validator, rag_validator, router)
-│   ├── core/                # Config (BaseSettings), database engine, logging
-│   ├── models/              # SQLModel database models + enums
-│   ├── schemas/             # Pydantic request/response schemas
-│   ├── services/            # Business logic (email, pipeline, poller, files, knowledge)
-│   ├── scripts/             # CLI tools (seed data, ingest knowledge, test pipeline)
-│   ├── migrations/          # Alembic migrations (auto-run on startup)
-│   └── tests/               # pytest test suite
-├── frontend/src/
-│   ├── api/                 # API client + endpoint functions
-│   ├── components/          # UI components (orders, reviews, analytics, layout)
-│   ├── hooks/               # TanStack Query hooks (live polling: 2–3s)
-│   ├── pages/               # Route pages (dashboard, order detail, analytics)
-│   └── types/               # TypeScript interfaces
+├── src/
+│   ├── backend/
+│   │   ├── api/routes/          # HTTP endpoints (orders, reviews, webhook, analytics)
+│   │   ├── agent/               # AI pipeline (classifier, extractor, validator, rag_validator, router)
+│   │   ├── core/                # Config (BaseSettings), database engine, logging
+│   │   ├── models/              # SQLModel database models + enums
+│   │   ├── schemas/             # Pydantic request/response schemas
+│   │   ├── services/            # Business logic (email, pipeline, poller, files, knowledge)
+│   │   ├── scripts/             # CLI tools (seed data, ingest knowledge, test pipeline)
+│   │   ├── migrations/          # Alembic migrations (auto-run on startup)
+│   │   └── tests/               # pytest test suite
+│   └── frontend/src/
+│       ├── api/                 # API client + endpoint functions
+│       ├── components/          # UI components (orders, reviews, analytics, layout)
+│       ├── hooks/               # TanStack Query hooks (live polling: 2–3s)
+│       ├── pages/               # Route pages (dashboard, order detail, analytics)
+│       └── types/               # TypeScript interfaces
 ├── knowledge/               # RAG source data + generated PDFs
 │   ├── vendors.json         # Approved vendor registry (10 vendors)
 │   ├── catalog.json         # Product catalog (15 SKUs)

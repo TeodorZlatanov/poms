@@ -4,9 +4,9 @@ Reads sample PDFs from samples/, builds fake email payloads, and runs them
 through the full pipeline: classify → extract → validate (DB) → RAG validate → route.
 
 Usage:
-    cd backend && uv run python -m scripts.test_pipeline
-    cd backend && uv run python -m scripts.test_pipeline --file ../samples/po_clean.pdf
-    cd backend && uv run python -m scripts.test_pipeline --skip-classify
+    cd src/backend && uv run python -m scripts.test_pipeline
+    cd src/backend && uv run python -m scripts.test_pipeline --file ../../samples/po_clean.pdf
+    cd src/backend && uv run python -m scripts.test_pipeline --skip-classify
 """
 
 import argparse
@@ -29,7 +29,7 @@ from models import (
 )
 from services.knowledge import knowledge_service
 
-SAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "samples"
+SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
 
 # Sample PO metadata for building fake email payloads
 SAMPLE_POS = {

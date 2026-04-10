@@ -5,9 +5,9 @@ Processes all PDFs in the knowledge/pdfs/ directory:
   → merge sub-section chunks → embed with Azure OpenAI → insert into LanceDB
 
 Usage:
-    cd backend && uv run python -m scripts.ingest_knowledge
-    cd backend && uv run python -m scripts.ingest_knowledge --pdf-dir ../knowledge/pdfs
-    cd backend && uv run python -m scripts.ingest_knowledge --drop  # recreate from scratch
+    cd src/backend && uv run python -m scripts.ingest_knowledge
+    cd src/backend && uv run python -m scripts.ingest_knowledge --pdf-dir ../../knowledge/pdfs
+    cd src/backend && uv run python -m scripts.ingest_knowledge --drop  # recreate from scratch
 """
 
 import argparse

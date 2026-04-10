@@ -49,7 +49,7 @@ Regenerate with: `cd knowledge && python generate_pdfs.py`
 ### Step 1: Seed reference data (deterministic validation)
 
 ```bash
-cd backend && uv run python -m scripts.seed_reference_data
+cd src/backend && uv run python -m scripts.seed_reference_data
 ```
 
 Loads `vendors.json` and `catalog.json` into PostgreSQL tables (`approved_vendors`, `product_catalog`, `procurement_policies`). These are used for exact vendor matching, price comparison, and spending limit checks.
@@ -57,7 +57,7 @@ Loads `vendors.json` and `catalog.json` into PostgreSQL tables (`approved_vendor
 ### Step 2: Ingest PDFs into LanceDB (RAG validation)
 
 ```bash
-cd backend && uv run python -m scripts.ingest_knowledge
+cd src/backend && uv run python -m scripts.ingest_knowledge
 ```
 
 Processes PDFs in `pdfs/` through PyMuPDF, splits by markdown headers, embeds with Azure OpenAI, and stores in LanceDB with hybrid search (vector + full-text). At startup, the backend connects to the existing LanceDB table - it does not re-embed.

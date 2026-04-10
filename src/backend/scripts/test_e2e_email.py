@@ -5,11 +5,11 @@ pipeline (classify → extract → validate → RAG → route), persists results
 and sends the appropriate response email back.
 
 Usage:
-    cd backend && uv run python -m scripts.test_e2e_email
-    cd backend && uv run python -m scripts.test_e2e_email --po clean
-    cd backend && uv run python -m scripts.test_e2e_email --po fuzzy
-    cd backend && uv run python -m scripts.test_e2e_email --po bad
-    cd backend && uv run python -m scripts.test_e2e_email --po all
+    cd src/backend && uv run python -m scripts.test_e2e_email
+    cd src/backend && uv run python -m scripts.test_e2e_email --po clean
+    cd src/backend && uv run python -m scripts.test_e2e_email --po fuzzy
+    cd src/backend && uv run python -m scripts.test_e2e_email --po bad
+    cd src/backend && uv run python -m scripts.test_e2e_email --po all
 """
 
 import argparse
@@ -38,7 +38,7 @@ from models import (
 from services.email import email_service
 from services.knowledge import knowledge_service
 
-SAMPLES_DIR = Path(__file__).resolve().parent.parent.parent / "samples"
+SAMPLES_DIR = Path(__file__).resolve().parents[3] / "samples"
 
 SAMPLE_POS = {
     # PDF samples
