@@ -74,17 +74,16 @@ const FIELD_LABELS: Record<string, string> = {
 
 function humanizeFieldMessage(msg: string): string {
   // "Required field 'po_number' is missing" → "PO number is missing (required)"
-  const reqMatch = msg.match(/Required field '([^']+)' is missing/);
-  if (reqMatch) {
-    const label = FIELD_LABELS[reqMatch[1]] ?? reqMatch[1];
+  const reqField = msg.match(/Required field '([^']+)' is missing/)?.[1];
+  if (reqField) {
+    const label = FIELD_LABELS[reqField] ?? reqField;
     return `${label.charAt(0).toUpperCase() + label.slice(1)} is missing (required)`;
   }
   // "Recommended field 'line_items[0].sku' is missing" → "Item SKU is missing"
-  const recMatch = msg.match(/Recommended field '([^']+)' is missing/);
-  if (recMatch) {
-    const raw = recMatch[1];
-    if (raw.includes("sku")) return "Item SKU/part number is missing";
-    const label = FIELD_LABELS[raw] ?? raw;
+  const recField = msg.match(/Recommended field '([^']+)' is missing/)?.[1];
+  if (recField) {
+    if (recField.includes("sku")) return "Item SKU/part number is missing";
+    const label = FIELD_LABELS[recField] ?? recField;
     return `${label.charAt(0).toUpperCase() + label.slice(1)} is missing`;
   }
   return msg;
