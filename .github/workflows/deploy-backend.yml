@@ -1,0 +1,103 @@
+name: Deploy Backend
+
+# Triggered by version tags (e.g. `v1.2.3`, `v1.2.3-backend`) or manual
+# workflow dispatch. Tags should be cut from `main` after CI has gone green.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write  # OIDC federated login to Azure
+
+jobs:
+  deploy:
+    name: Build image & roll out Container App
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        env:
+          ACR_LOGIN_SERVER: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+        run: az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+
+      - name: Compute image tags
+        id: meta
+        run: |
+          REGISTRY="${{ secrets.AZURE_CONTAINER_REGISTRY }}"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="sha-${GITHUB_SHA::7}"
+          fi
+          echo "version=${VERSION}"                            >> "$GITHUB_OUTPUT"
+          echo "image=${REGISTRY}/poms-backend:${VERSION}"     >> "$GITHUB_OUTPUT"
+          echo "latest=${REGISTRY}/poms-backend:latest"        >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: src/backend
+          file: src/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update Container App
+        run: |
+          az containerapp update \
+            --name "${{ secrets.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ steps.meta.outputs.image }}"
+
+      - name: Verify rollout (health check)
+        run: |
+          FQDN="$(az containerapp show \
+            --name "${{ secrets.AZURE_CONTAINER_APP }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "Backend URL: https://${FQDN}"
+          for attempt in 1 2 3 4 5 6; do
+            if curl -fsS "https://${FQDN}/health"; then
+              echo
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt ${attempt} failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Health check failed after 6 attempts" >&2
+          exit 1
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Backend deploy"
+            echo ""
+            echo "- Version: \`${{ steps.meta.outputs.version }}\`"
+            echo "- Image: \`${{ steps.meta.outputs.image }}\`"
+            echo "- Container App: \`${{ secrets.AZURE_CONTAINER_APP }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

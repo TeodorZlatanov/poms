@@ -1,0 +1,69 @@
+name: Deploy Frontend
+
+# Triggered by version tags (e.g. `v1.2.3`) or manual workflow dispatch.
+# Tags should be cut from `main` after CI has gone green.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Build & deploy to Static Web Apps
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build with production API URL
+        env:
+          VITE_API_BASE_URL: https://${{ secrets.AZURE_CONTAINER_APP_FQDN }}
+        run: pnpm build
+
+      - name: Deploy to Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APP_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: src/frontend
+          output_location: dist
+          skip_app_build: true
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Frontend deploy"
+            echo ""
+            echo "- Ref: \`${GITHUB_REF_NAME}\`"
+            echo "- API base URL: \`https://${{ secrets.AZURE_CONTAINER_APP_FQDN }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
